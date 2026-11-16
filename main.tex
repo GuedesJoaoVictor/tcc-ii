@@ -1,0 +1,159 @@
+% % % % % % % % %  MDT UFSM 2021  % % % % % % % % %
+%% Arquivo base para o documento - ver. 1.0 %%
+% % % % % % % % % % % % % % % % % % % % % % % % %
+
+\documentclass[oneside,openright,12pt]{ufsm_2021}
+\usepackage{listings}
+\usepackage[scaled]{helvet}
+\renewcommand*\familydefault{\sfdefault}
+\usepackage{lipsum}
+\usepackage{quoting}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes.geometric}
+\usepackage{xcolor}
+% Pendências visíveis no PDF; remover antes da entrega.
+\newcommand{\verificar}[1]{\textcolor{red}{[VERIFICAR: #1]}}
+% Só valem se a classe não definir estes comandos (abntex2cite define \citeonline).
+\providecommand{\citeonline}{\cite}
+\providecommand{\fonte}[1]{\par\vspace{2pt}{\small Fonte: #1}}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% % % DADOS DO TRABALHO % % %
+
+% % INSTITUCIONAIS
+\centroensino{COLÉGIO POLITÉCNICO}
+\centroensinosigla{CCNE}
+\nivelensino{Graduação}
+\curso{Sistemas para Internet}
+\ppg{PPGALGO}
+\statuscurso{Curso}
+\cidade{Santa Maria}
+\estado{RS}
+
+% % AUTOR
+\author{João Víctor Guedes}
+\sexo{M}
+\grauensino{Graduação}
+\grauobtido{Tecnólogo}
+\email{joaoguedes1404@gmail.com}
+
+% % BANCA
+\orientador{Alencar Machado}{Dr}{UFSM}{M}{P}
+\bancaum{Vinicius Maran}{Dr}{UFSM}{F}{M}
+\bancadois{Pedro Bilar}{Pg}{UFSM}
+
+% % TÍTULO
+% Título provisório, adaptado do artigo ICEIS.
+\titulo{RAG EM PLATAFORMAS GOVERNAMENTAIS:}
+\englishtitle{RAG in Government Platforms:}
+\subtitulo{PARECERES TÉCNICOS ASSISTIDOS POR LLM NA CERTIFICAÇÃO HIGIÊNICO-SANITÁRIA DA PNIP.}
+\subenglishtitle{LLM-Assisted Technical Opinions for Hygiene-Sanitary Certification in PNIP.}
+\areaconcentracao{Inteligência Artificial e Computação Aplicada.}
+
+\tccg
+\data{30}{06}{2026}
+
+% % EPIGRAFE
+\epigrafe{"Uma lição sem dor não tem sentido. Porque as pessoas não podem ganhar algo sem sacrificar algo em troca."}{Edward Elric}
+% % DEDICATORIA
+\dedicatoria{
+	Dedico esse trabalho a minha família por todo o suporte dado durante a minha jornada acadêmica, mas principalmente
+	a minha mãe Joceli Maria de Mattos e ao meu pai Rubens Rodrigo Schultz Guedes, que sempre fizeram de tudo para que eu consiga apenas focar na parte acadêmica sem 
+	ter que me preocupar com mais nada. Agradeço também a minha namorada Ana Caroline Souza Santos, que sempre me apoiou e incentivou durante toda a minha trajetória, mesmo nos momentos mais difíceis.
+}
+% % AGRADECIMENTOS
+\agradecimentos{
+	Agradeço ao meu orientador, Prof. Dr. Alencar Machado, pela orientação, paciência e contribuição para a realização deste trabalho.
+	Agradeço também ao Laboratório de Computação Ubíqua Móvel e Aplicada (LUMAC) pela oportunidade de aplicar os meus conhecimentos adquiridos dentro do curso na prática.
+	Agradeço também aos professores do curso de Sistemas para Internet pelos conhecimentos compartilhados e pela paciência durante a passagem do mesmo.
+	Por fim, agradeço a minha família e amigos pelo apoio, incentivo e conselhos durante toda essa jornada. 
+}
+
+% % RESUMO
+% Escrever ao final. O resumo do artigo ICEIS (artigo-iceis-guedes/pt-br/main.tex) serve de base.
+\resumo{
+\verificar{resumo a escrever quando os capítulos de resultados estiverem prontos.}
+}
+\palavrachave{\textit{Retrieval-Augmented Generation. Large Language Models. Governo Digital. PNIP. Certificação Higiênico-Sanitária.}}
+
+% % ABSTRACT
+\abstract{
+\verificar{abstract to be written.}
+}
+\keywords{\textit{Retrieval-Augmented Generation. Large Language Models. Digital Government. PNIP. Hygiene-Sanitary Certification.}}
+
+% % LISTAS
+\abreviaturamax{SIGLAMAX}
+\listadeabreviaturas{
+	BGE-M3 & \textit{BAAI General Embedding M3} \\
+	DPR & \textit{Dense Passage Retrieval} \\
+	HNSW & \textit{Hierarchical Navigable Small World} \\
+	HS & Higiênico-Sanitária \\
+	IA & Inteligência Artificial \\
+	JAP & Junta Administrativa de Recursos de Infrações \\
+	LGPD & Lei Geral de Proteção de Dados Pessoais \\
+	LLM & \textit{Large Language Model} \\
+	LoRA & \textit{Low-Rank Adaptation} \\
+	LUMAC & Laboratório de Computação Ubíqua, Móvel e Aplicada \\
+	MAPA & Ministério da Agricultura e Pecuária \\
+	MPA & Ministério da Pesca e Aquicultura \\
+	OCR & \textit{Optical Character Recognition} \\
+	PAC & Programa de Autocontrole \\
+	PDSA-RS & Plataforma de Defesa Sanitária Animal do Rio Grande do Sul \\
+	PNIP & Plataforma Nacional da Indústria do Pescado \\
+	RAG & \textit{Retrieval-Augmented Generation} \\
+	RLHF & \textit{Reinforcement Learning from Human Feedback} \\
+	SEAPI-RS & Secretaria da Agricultura, Pecuária e Desenvolvimento Rural do Rio Grande do Sul \\
+	UFSM & Universidade Federal de Santa Maria
+}
+
+\siglamax{SIGLAMAX}
+\listadesiglas{
+	BGE-M3 & \textit{BAAI General Embedding M3} \\
+	DPR & \textit{Dense Passage Retrieval} \\
+	HNSW & \textit{Hierarchical Navigable Small World} \\
+	HS & Higiênico-Sanitária \\
+	IA & Inteligência Artificial \\
+	JAP & Junta Administrativa de Recursos de Infrações \\
+	LGPD & Lei Geral de Proteção de Dados Pessoais \\
+	LLM & \textit{Large Language Model} \\
+	LoRA & \textit{Low-Rank Adaptation} \\
+	LUMAC & Laboratório de Computação Ubíqua, Móvel e Aplicada \\
+	MAPA & Ministério da Agricultura e Pecuária \\
+	MPA & Ministério da Pesca e Aquicultura \\
+	OCR & \textit{Optical Character Recognition} \\
+	PAC & Programa de Autocontrole \\
+	PDSA-RS & Plataforma de Defesa Sanitária Animal do Rio Grande do Sul \\
+	PNIP & Plataforma Nacional da Indústria do Pescado \\
+	RAG & \textit{Retrieval-Augmented Generation} \\
+	RLHF & \textit{Reinforcement Learning from Human Feedback} \\
+	SEAPI-RS & Secretaria da Agricultura, Pecuária e Desenvolvimento Rural do Rio Grande do Sul \\
+	UFSM & Universidade Federal de Santa Maria
+}
+
+% % FICHA CATALOGRAFICA
+\semcatalografica
+
+\videoconferenciabancap{}
+\videoconferenciabancas{}
+\providecommand{\deactivatetocstyle}{}
+\providecommand{\reactivatetocstyle}{}
+
+\begin{document}
+
+\pretextual
+
+% % CAPÍTULOS
+\input{1-introducao}
+\input{2-referencial-teorico}
+% Capítulos previstos (arquivos ainda não criados):
+% \input{3-trabalhos-relacionados}   % RSL: fora até decidir se entra no TCC II
+% \input{4-metodologia}              % DocFlow e extensões, label cap:metodologia
+% \input{5-estudo-de-caso}           % label cap:estudo-caso
+% \input{6-consideracoes-finais}     % limitações, trabalhos futuros, conclusão; label cap:consideracoes
+
+\startbibliography
+\bibliography{referencias}
+
+\end{document}

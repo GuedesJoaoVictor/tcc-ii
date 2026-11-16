@@ -1,0 +1,51 @@
+% ============================================================
+% Capítulo 1 - Introdução
+% Base: artigo ICEIS (artigo-iceis-guedes/pt-br/main.tex), Seção 1.
+% ============================================================
+\chapter{Introdução}
+\label{cap:introducao}
+
+Os \textit{Large Language Models} (LLMs) passaram, em poucos anos, de objeto de pesquisa a ferramenta de uso cotidiano. Treinados sobre grandes volumes de texto, esses modelos geram, resumem e respondem perguntas com pouca ou nenhuma supervisão específica para cada tarefa \cite{Brown2020,Zhao2023}. Essa capacidade chamou a atenção da administração pública, em que os órgãos lidam com muitos documentos e precisam interpretar normas extensas, técnicas e que mudam com o tempo. A literatura recente registra aplicações de LLMs na análise de documentos oficiais, no atendimento ao cidadão, na verificação de conformidade regulatória e no apoio à elaboração de pareceres e decisões administrativas \verificar{citar exemplos}.
+
+Em sistemas governamentais, porém, uma resposta útil não basta: ela precisa ser correta, rastreável até a norma que a fundamenta e verificável por quem responde pela decisão. Os LLMs não oferecem essas garantias por si mesmos. Seu conhecimento fica limitado ao que estava nos dados de treinamento, e eles podem produzir afirmações plausíveis, mas falsas, fenômeno conhecido como alucinação \cite{Ji2023}. A \textit{Retrieval-Augmented Generation} (RAG) \cite{Lewis2020} trata dessas limitações ao acrescentar ao \textit{prompt} trechos recuperados de uma base de conhecimento externa, de modo que a resposta se apoie em documentos autorizados e possa citá-los \cite{Gao2023}. Como a base pode ser atualizada sem retreinar o modelo, a abordagem é adequada a domínios regulados, em que as normas são publicadas, alteradas e revogadas com frequência.
+
+No Laboratório de Computação Ubíqua, Móvel e Aplicada (LUMAC) da Universidade Federal de Santa Maria (UFSM), essa linha de pesquisa começou na Plataforma de Defesa Sanitária Animal do Rio Grande do Sul (PDSA-RS). Ali, um sistema RAG que recupera trechos das instruções normativas sobre sanidade avícola elevou de 12\% para 55\% a acurácia das respostas de um LLM executado localmente na análise de solicitações de certificação \cite{Montero2025iceis,Montero2025}. Em seguida, o grupo propôs uma arquitetura de assistente para analistas do setor público e avaliou pareceres gerados por LLM em recursos administrativos julgados pela Secretaria da Agricultura do Rio Grande do Sul \cite{Montero2026}. Essa arquitetura foi depois implementada como a plataforma DocFlow, usada neste trabalho.
+
+Este trabalho leva essa abordagem a um novo contexto: a Plataforma Nacional da Indústria do Pescado (PNIP) \cite{MPA2024}, a plataforma digital oficial do Ministério da Pesca e Aquicultura (MPA) para a certificação de embarcações e produtos pesqueiros. Entre os processos tratados na PNIP está a certificação higiênico-sanitária (HS) de embarcações, regida pela Portaria SAP/MAPA nº~310/2020 e suas alterações \cite{Portaria310,Portaria171,Portaria742}. Em cada solicitação, o técnico responsável pela embarcação anexa documentos e registros fotográficos que comprovam os requisitos da norma, e um analista do MPA confere cada item da lista de verificação, registra as não conformidades e redige um parecer técnico.
+
+\section{Problema}
+\label{sec:problema}
+
+O gargalo da certificação HS é a carga de trabalho. Há mais solicitações do que os analistas disponíveis conseguem examinar, e muitas ficam paradas na plataforma aguardando análise. Cada análise exige ler um dossiê heterogêneo, com programas de autocontrole, laudos, declarações, registros de treinamento e dezenas de fotografias, e confrontá-lo com uma norma que já foi alterada mais de uma vez. Um LLM poderia ler o dossiê e as fotos, confrontá-los com as normas aplicáveis e redigir um rascunho de parecer para o analista revisar, mantendo com ele a decisão final. Não se sabe, porém, se as técnicas que funcionaram na PDSA-RS, em que a decisão depende de dados estruturados de exames laboratoriais, se transferem para um processo em que a decisão depende do julgamento sobre o conteúdo de documentos e fotografias.
+
+Daí a questão que orienta este trabalho: \textbf{a recuperação das normas aplicáveis por RAG e o envio dos registros fotográficos ao modelo ajudam um LLM a reproduzir a análise dos analistas da PNIP na certificação higiênico-sanitária de embarcações?}
+
+\section{Objetivos}
+\label{sec:objetivos}
+
+\subsection{Objetivo geral}
+
+Avaliar a aplicação de uma arquitetura RAG com LLMs ao apoio à análise das solicitações de certificação higiênico-sanitária de embarcações na PNIP, medindo se o contexto normativo recuperado e os registros fotográficos aproximam as sugestões do modelo da análise dos analistas humanos.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}
+	% Objetivo da RSL retirado enquanto não se decide se ela entra no TCC II (texto em 3-trabalhos-relacionados.tex).
+	\item Indexar o corpus normativo da certificação HS segmentado por artigo, preservando a origem de cada trecho para que possa ser citado.
+	\item Estender a plataforma DocFlow para recuperar as normas a partir dos documentos de cada processo e para enviar os registros fotográficos aos modelos como imagens.
+	\item Avaliar modelos de pesos abertos, executados em infraestrutura própria, e modelos hospedados em processos já decididos, com e sem o contexto normativo e as fotografias, tomando a decisão do analista como referência.
+	\item Medir a qualidade da recuperação e comparar, item a item, rascunhos de parecer gerados pelo modelo com os pareceres finais dos analistas.
+\end{enumerate}
+
+\section{Justificativa}
+\label{sec:justificativa}
+
+A certificação HS atesta as boas práticas higiênico-sanitárias a bordo das embarcações pesqueiras e, junto com as demais certificações da PNIP, sustenta a rastreabilidade que liga cada produto pesqueiro à sua origem \cite{Olsen2018}, um dos instrumentos de combate à pesca ilegal, não declarada e não regulamentada \cite{Agnew2009}. A demora na análise atrasa a regularização das embarcações e sobrecarrega os analistas. Um assistente que adiante a leitura do dossiê e aponte as evidências relevantes pode reduzir esse tempo, desde que suas sugestões sejam rastreáveis e a decisão permaneça com o servidor.
+
+Do ponto de vista científico, não foram encontrados na literatura consultada estudos que gerem pareceres técnicos sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis. Avaliar essa combinação em processos reais, e relatar também o que não funcionou, contribui para entender os limites do RAG em tarefas de julgamento administrativo. Por fim, a execução local dos modelos de pesos abertos permite processar documentos de terceiros sem enviá-los a serviços externos, o que importa sob a Lei Geral de Proteção de Dados Pessoais \cite{Brasil2018}.
+
+\section{Organização do trabalho}
+\label{sec:organizacao}
+
+O Capítulo~\ref{cap:referencial} apresenta os conceitos de inteligência artificial, LLMs, RAG, \textit{fine-tuning}, \textit{embeddings} e \textit{chunking}, os trabalhos anteriores do grupo na PDSA-RS e o contexto da PNIP e da certificação higiênico-sanitária. % AJUSTAR quando os capítulos seguintes estiverem definidos.
+O Capítulo~\ref{cap:metodologia} descreve a plataforma DocFlow e as extensões feitas para a PNIP, o Capítulo~\ref{cap:estudo-caso} relata o estudo de caso, e o Capítulo~\ref{cap:consideracoes} apresenta as limitações, os trabalhos futuros e as considerações finais.

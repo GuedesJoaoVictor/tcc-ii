@@ -1,0 +1,221 @@
+% ============================================================
+% Capítulo 3 - Trabalhos Relacionados (revisão sistemática rápida)
+% Base: artigo-iceis-guedes/pt-br/rsl.tex, RSL-Rayyan/Instrucoes_Projeto_RSL.md,
+% RSL-Rayyan/dados-rsl.md e as planilhas de triagem (export do Rayyan de 12/11/2026).
+% ============================================================
+\chapter{Trabalhos Relacionados}
+\label{cap:trabalhos-relacionados}
+
+Para posicionar este trabalho, foi conduzida uma revisão sistemática rápida da literatura sobre o uso de LLMs e de arquiteturas RAG na administração pública. Revisões rápidas seguem as etapas de uma revisão sistemática (protocolo, busca em bases, critérios explícitos e triagem por mais de um revisor), mas simplificam algumas delas para chegar a uma síntese em menos tempo. Neste caso, a elegibilidade foi avaliada em uma única etapa de triagem. A revisão foi feita em conjunto com o coautor do artigo que deu origem a este trabalho, e os dois atuaram como revisores independentes. Este capítulo descreve o protocolo (Seção~\ref{sec:rsl-protocolo}), apresenta os resultados organizados pelas questões de pesquisa (Seção~\ref{sec:rsl-resultados}) e fecha com a comparação entre os trabalhos mais próximos e este (Seção~\ref{sec:rsl-lacuna}).
+
+% ------------------------------------------------------------
+\section{Protocolo da Revisão}
+\label{sec:rsl-protocolo}
+
+\subsection{Questões de pesquisa}
+
+A revisão foi guiada por três questões de pesquisa (QP):
+
+\begin{itemize}
+	\item \textbf{QP1:} Como LLMs e arquiteturas RAG estão sendo aplicados na administração pública?
+	\item \textbf{QP2:} Que tarefas administrativas eles apoiam (por exemplo, análise de documentos, pareceres técnicos, verificação de conformidade, apoio à decisão e atendimento ao cidadão)?
+	\item \textbf{QP3:} Como esses sistemas são avaliados (métricas, avaliação humana, uso de LLMs como avaliadores) e que desafios são relatados (alucinação, rastreabilidade, privacidade, responsabilização)?
+\end{itemize}
+
+\subsection{Estratégia de busca}
+
+As buscas foram feitas em 8 de novembro de 2026 em quatro bases: Scopus, Web of Science, IEEE Xplore e ACM Digital Library. O Google Scholar e o arXiv não foram usados, por não garantirem a revisão por pares. A \textit{string} de busca combinou três blocos com o operador AND:
+
+\begin{enumerate}
+	\item \textbf{Tecnologia}, no título ou no resumo: \textit{``retrieval-augmented generation''}, \textit{``retrieval augmented generation''}, \textit{``large language model(s)''}, \textit{``generative AI''} e \textit{``generative artificial intelligence''};
+	\item \textbf{Setor público}, apenas no título: \textit{government*}, \textit{``public sector''}, \textit{``public administration''}, \textit{``e-government''}, \textit{``digital government''}, \textit{``public agency/agencies''}, \textit{``public services''}, \textit{``regulatory compliance''}, \textit{``food safety''}, \textit{``sanitary inspection''}, \textit{``health inspection''} e \textit{``veterinary inspection''};
+	\item \textbf{Documentos}, no título ou no resumo: \textit{document*}, \textit{report*}, \textit{opinion*}, \textit{legal}, \textit{regulation*}, \textit{compliance} e \textit{inspection*}.
+\end{enumerate}
+
+O bloco do setor público foi restrito ao título para evitar estudos que apenas mencionam o governo como possível aplicação, e o terceiro bloco concentrou a busca em tarefas que envolvem documentos e normas. Os termos de segurança dos alimentos e de inspeção sanitária foram incluídos para captar trabalhos do domínio da PNIP. Foram aplicados os filtros de período (2020 a 2026), de idioma (inglês e português) e de tipo de publicação (artigos de periódico e de conferência). A sintaxe foi adaptada a cada base, e a Tabela~\ref{tab:rsl-busca} resume os campos usados e o número de registros retornados. As \textit{strings} completas estão no repositório da revisão. \verificar{incluir as strings completas como apêndice, se a banca pedir.}
+
+\begin{table}[htb]
+	\centering
+	\caption{Campos de busca e registros retornados por base.}
+	\label{tab:rsl-busca}
+	\small
+	\begin{tabular}{|l|l|r|}
+		\hline
+		\textbf{Base} & \textbf{Campos (blocos 1, 2 e 3)} & \textbf{Registros} \\
+		\hline
+		Scopus & TITLE-ABS, TITLE, TITLE-ABS & 145 \\
+		Web of Science & TI/AB, TI, TI/AB & 93 \\
+		IEEE Xplore & \textit{Abstract}, \textit{Document Title}, \textit{Abstract} & 35 \\
+		ACM Digital Library & \textit{Abstract}, \textit{Title}, \textit{Abstract} & 17 \\
+		\hline
+		\textbf{Total} & & \textbf{290} \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+\subsection{Critérios de inclusão e exclusão}
+
+Os critérios definidos antes da triagem estão na Tabela~\ref{tab:rsl-criterios}. Um estudo foi incluído quando atendia a todos os critérios de inclusão e a nenhum de exclusão. Um caso de fronteira foi decidido durante a calibração: estudos qualitativos sobre a adoção de LLMs no governo, como entrevistas e questionários com servidores, foram incluídos, por tratarem diretamente da QP3, ainda que não proponham um sistema.
+
+\begin{table}[htb]
+	\centering
+	\caption{Critérios de inclusão e de exclusão da revisão.}
+	\label{tab:rsl-criterios}
+	\small
+	\begin{tabular}{|c|L{0.8\textwidth}|}
+		\hline
+		\textbf{Código} & \textbf{Critério} \\
+		\hline
+		I1 & Estudo primário que aplica, avalia ou propõe soluções baseadas em LLM ou RAG. \\
+		I2 & Contexto de setor público (governo, administração pública, agências públicas, órgãos reguladores ou de inspeção). \\
+		I3 & Artigo revisado por pares, de periódico ou de conferência. \\
+		I4 & Publicado entre 2020 e 2026, em inglês ou português (registros de acesso antecipado já atribuídos a 2027 foram mantidos). \\
+		\hline
+		E1 & Não trata do setor público (por exemplo, conformidade em empresas privadas). \\
+		E2 & Não usa LLM nem RAG (aprendizado de máquina clássico ou apenas regras). \\
+		E3 & Não é estudo primário (editorial, introdução de edição especial, ensaio de opinião). \\
+		E4 & Não é revisado por pares (\textit{preprint}, apenas resumo, pôster sem artigo). \\
+		E5 & Texto completo indisponível. \\
+		E6 & Fora do período ou dos idiomas definidos. \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+\subsection{Seleção dos estudos}
+
+Os registros das quatro bases foram importados no Rayyan, ferramenta de apoio a revisões sistemáticas, que identificou e removeu 181 duplicatas, restando 109 registros. \verificar{uma deduplicação preliminar por DOI e título havia estimado 119 duplicatas e 171 registros únicos; conferir no Rayyan por que a diferença é tão grande, por exemplo, se todos os arquivos foram importados.} Os dois revisores triaram os 109 registros pelo título e pelo resumo de forma independente e em modo cego, isto é, sem ver as decisões um do outro, classificando cada um como incluído, excluído ou incerto (\textit{Maybe}).
+
+A concordância entre os revisores foi medida pelo $\kappa$ de Cohen \cite{Cohen1960}, que desconta a concordância esperada ao acaso. Com as três categorias, os revisores concordaram em 96 dos 109 registros (88\%), com $\kappa = 0{,}69$, o que corresponde a uma concordância substancial; considerando apenas a distinção entre incluir e não incluir, $\kappa = 0{,}88$. Os 13 conflitos e os 16 registros classificados como incertos pelos dois revisores foram resolvidos por consenso.
+
+Ao final, 23 registros foram excluídos: 8 não tratavam do setor público (E1), 3 não eram estudos primários (E3) e 12 usavam LLMs apenas como instrumento de pesquisa, por exemplo para classificar textos em estudos de ciências sociais sobre o governo, e não como solução para a administração pública, não atendendo, portanto, ao critério I1. Foram incluídos 86 estudos. A Figura~\ref{fig:rsl-fluxo} resume o fluxo, no formato do diagrama PRISMA.
+
+\begin{figure}[htb]
+	\centering
+	\caption{Fluxo de seleção dos estudos.}
+	\label{fig:rsl-fluxo}
+	\begin{tikzpicture}[
+		font=\small,
+		etapa/.style={draw, align=center, text width=62mm, minimum height=11mm, fill=white},
+		saida/.style={draw, align=left, text width=60mm, minimum height=11mm, fill=black!5},
+		fase/.style={font=\small\bfseries, rotate=90, anchor=center},
+		node distance=8mm, >=stealth, every path/.style={->, thick}]
+		\node[etapa] (id) {Registros identificados: 290\\{\footnotesize Scopus 145; Web of Science 93; IEEE 35; ACM 17}};
+		\node[etapa, below=of id] (tri) {Registros triados por título e resumo: 109};
+		\node[etapa, below=of tri] (inc) {Estudos incluídos: 86};
+		\node[saida, right=8mm of id] (dup) {Duplicatas removidas: 181};
+		\node[saida, right=8mm of tri] (exc) {Registros excluídos: 23\\{\footnotesize Fora do setor público (E1): 8\\LLM só como instrumento de pesquisa (I1): 12\\Não primários (E3): 3}};
+		\draw (id) -- (tri);
+		\draw (tri) -- (inc);
+		\draw (id) -- (dup);
+		\draw (tri) -- (exc);
+		\node[fase] at ([xshift=-6mm]id.west) {Identificação};
+		\node[fase] at ([xshift=-6mm]tri.west) {Triagem};
+		\node[fase] at ([xshift=-6mm]inc.west) {Inclusão};
+	\end{tikzpicture}
+	\fonte{Elaborado pelo autor, no formato do diagrama PRISMA.}
+\end{figure}
+
+\subsection{Classificação dos estudos}
+
+Os estudos incluídos foram classificados com um conjunto de rótulos definido antes da triagem, em três grupos. Quanto à \textbf{arquitetura}, cada estudo recebeu um rótulo: RAG, quando o sistema recupera trechos de uma base de documentos antes da geração (incluindo variantes com grafos de conhecimento e arquiteturas multiagentes), ou LLM sem recuperação externa, quando o conhecimento vem apenas do modelo e do \textit{prompt}. Estudos sem um sistema, como os de adoção, não receberam rótulo de arquitetura. Quanto à \textbf{tarefa apoiada}, um estudo podia receber mais de um rótulo entre análise de documentos, pareceres técnicos e decisões, conformidade regulatória, compras públicas, serviços ao cidadão e domínio sanitário e alimentar. Quanto ao \textbf{tipo de estudo}, foram marcados os estudos qualitativos ou por questionário e os que propõem \textit{benchmarks} ou \textit{frameworks} de avaliação; os que propõem e avaliam um sistema próprio, o caso mais comum, não receberam rótulo de tipo.
+
+% ------------------------------------------------------------
+\section{Resultados}
+\label{sec:rsl-resultados}
+
+A Tabela~\ref{tab:rsl} resume a classificação dos 86 estudos incluídos. O tema é muito recente: 10 estudos foram publicados em 2024, 28 em 2025 e 48 em 2026 (um deles um artigo de acesso antecipado já atribuído a 2027), e nenhum antes de 2024, embora a busca começasse em 2020.
+
+\begin{table}[htb]
+	\centering
+	\caption{Classificação dos 86 estudos incluídos.}
+	\label{tab:rsl}
+	\small
+	\begin{tabular}{|l|r|r|}
+		\hline
+		\textbf{Categoria} & \textbf{n} & \textbf{\%} \\
+		\hline
+		\multicolumn{3}{|l|}{\textit{Arquitetura}} \\
+		\hline
+		LLM sem recuperação externa & 38 & 44 \\
+		RAG ou variante com recuperação & 31 & 36 \\
+		Sem sistema (sobretudo estudos de adoção) & 17 & 20 \\
+		\hline
+		\multicolumn{3}{|l|}{\textit{Tarefa apoiada (um estudo pode ter mais de uma)}} \\
+		\hline
+		Análise de documentos & 38 & 44 \\
+		Serviços ao cidadão e perguntas e respostas & 29 & 34 \\
+		Conformidade regulatória & 15 & 17 \\
+		Pareceres técnicos e decisões & 7 & 8 \\
+		Domínio sanitário e alimentar & 7 & 8 \\
+		Compras públicas & 6 & 7 \\
+		\hline
+		\multicolumn{3}{|l|}{\textit{Tipo de estudo (seleção)}} \\
+		\hline
+		Qualitativo ou por questionário & 15 & 17 \\
+		\textit{Benchmark} ou \textit{framework} de avaliação & 12 & 14 \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+\subsection{QP1: aplicações e arquiteturas}
+
+A maioria dos sistemas usa LLMs por meio de \textit{prompting} ou de \textit{fine-tuning}, mas o RAG já aparece em mais de um terço dos estudos incluídos, em geral para embasar as respostas em normas e documentos oficiais. São frequentes as variantes que acrescentam estrutura à recuperação, como grafos de conhecimento combinados com RAG na avaliação de propostas em compras públicas \cite{Zeng2026} e em perguntas sobre políticas públicas \cite{Papageorgiou2025}. No DataGovAI, que apoia servidores do estado de Utah, nos Estados Unidos, na aplicação das regras de retenção de dados, um agente recupera evidências nas tabelas de temporalidade e outro valida e formata as respostas com citações \cite{Memari2026}.
+
+A soberania dos dados molda várias arquiteturas. Restrições regulatórias levam a implantações locais em governos municipais filipinos \cite{Ayuyang2026}, ao uso de modelos de código aberto com \textit{embeddings} baseados em tradução em um assistente para a administração pública italiana \cite{Mala2025} e ao treinamento federado de um assistente que não centraliza os dados \cite{JimenezGutierrez2026}. Essa preocupação também orientou os trabalhos anteriores do grupo, que executaram os modelos em infraestrutura própria \cite{Montero2025}.
+
+A segmentação dos textos legais é outra preocupação recorrente, como discutido na Seção~\ref{sec:chunking}. Vários estudos comparam estratégias de \textit{chunking} em documentos governamentais e mostram que o tamanho e a estrutura dos trechos afetam a recuperação \cite{Boonmee2026,Kawashima2024}. Em normas indonésias, a divisão nos limites dos artigos combinada com a expansão da consulta atingiu 90\% de acurácia nas respostas \cite{Fiddina2026}, e o assistente para analistas de recursos administrativos de \citeonline{Montero2026} também segmenta a legislação por artigo.
+
+\subsection{QP2: tarefas apoiadas}
+
+A análise de documentos é a tarefa mais frequente (44\% dos estudos). Inclui perguntas e respostas sobre normas \cite{Fiddina2026,Legado2026}, a busca em editais de licitação do governo australiano \cite{Fowler2026}, a recuperação da base legal de achados de auditoria governamental \cite{Liu2025} e, no Brasil, a revisão das descrições de serviços públicos na plataforma Gov.br com o auxílio de vários LLMs \cite{Ramos2025}. Assistentes voltados ao cidadão vêm em seguida (34\%), com atenção crescente à verificabilidade: em um assistente sobre o orçamento público, os trechos recuperados são registrados em uma \textit{blockchain} para que o cidadão possa verificar a integridade das fontes \cite{Firenza2026}.
+
+A verificação de conformidade aparece em 17\% dos estudos, das regras de retenção de dados em órgãos estaduais \cite{Memari2026} ao monitoramento de conformidade combinado com aprendizado por reforço para propor ajustes nas próprias regras \cite{Priya2026}. Apenas 7 estudos (8\%) apoiam pareceres técnicos ou decisões, a tarefa mais próxima da deste trabalho. Entre eles estão a avaliação de propostas em licitações \cite{Sofat2024,Zeng2026}; a avaliação de estudos de viabilidade de projetos de investimento governamental, em que os LLMs tiveram notas gerais consistentes com as de especialistas e se saíram melhor em critérios explícitos do que nos que exigem julgamento mais elaborado \cite{Sheng2026}; e a verificação da validade legal de decisões de assistência social com uma abordagem neurossimbólica \cite{Sunny2026}.
+
+\subsection{QP3: avaliação e desafios}
+
+As práticas de avaliação são heterogêneas. A recuperação costuma ser medida com Recall@$k$, MRR e NDCG \cite{Boonmee2026,Liu2025}, e as respostas com acurácia, ROUGE ou as métricas de fidelidade e relevância do RAGAS \cite{Fiddina2026,Memari2026}. Na certificação sanitária avícola, o RAG com o LLaMA 3.1 8B executado localmente acertou 55 de 100 consultas, contra 12 do mesmo modelo sem recuperação \cite{Montero2025}. Os \textit{benchmarks} do domínio governamental mostraram que muitos LLMs têm baixa confiabilidade diante de pequenas variações na entrada \cite{Liu2025b}, e outros trabalhos propõem critérios para avaliar arquiteturas de \textit{chatbots} segundo valores do serviço público, como conformidade legal, segurança e transparência \cite{Papadopoulos2025}. Alguns artigos de arquitetura não relatam resultado empírico \cite{Ayuyang2026}.
+
+Poucos estudos medem o efeito sobre o trabalho dos servidores. Em um governo local japonês, um sistema RAG manteve a acurácia dos servidores em perguntas de resposta curta (93,3\%) e reduziu seu tempo de trabalho em 23,6\%, mas teve desempenho pior em perguntas descritivas \cite{Kawashima2024}. Em um quase-experimento com 80 servidores públicos, a IA generativa reduziu em cerca de quatro minutos por documento o tempo para redigir respostas a cidadãos \cite{Kim2026}. \verificar{confirmar no texto completo de Kawashima et al. (2024) que o governo local é japonês.}
+
+Os desafios relatados com mais frequência são a privacidade e a soberania dos dados, as alucinações e a confiança nas respostas. Nos recursos administrativos da SEAPI-RS, o Gemini 2.5 Pro tomou decisões estáveis, mas pôde ser induzido a erro por argumentos jurídicos sofisticados e incorretos \cite{Montero2026}. Os estudos qualitativos acrescentam questões organizacionais: a responsabilização tende a se diluir quando os servidores adotam por padrão as saídas geradas \cite{Jonathan2026}; os servidores que analisam casos esperam assistência em subtarefas específicas, e não a automação completa da decisão \cite{Drobotowicz2026}; e as organizações públicas brasileiras ainda carecem de estruturas de governança e de regulamentação para o uso responsável da IA generativa \cite{Alves2024,Canedo2026}. Esses resultados reforçam a escolha, feita no DocFlow, de manter o analista como responsável pela decisão.
+
+% ------------------------------------------------------------
+\section{Lacuna de Pesquisa}
+\label{sec:rsl-lacuna}
+
+Os sete estudos do domínio sanitário e de segurança dos alimentos se concentram na fiscalização e na regulação, e não na análise de solicitações. Entre eles estão o FSLLM, um modelo especializado em segurança dos alimentos obtido por pré-treinamento continuado e \textit{fine-tuning} do Qwen3-8B sobre um corpus que inclui normas e relatórios de inspeção \cite{Shen2026}; a extração de informações quantitativas de normas chinesas de segurança dos alimentos \cite{Zhao2026}; um conjunto de dados para a sumarização de documentos de segurança dos alimentos \cite{Bakagianni2025}; o planejamento da amostragem de inspeções com LLMs e aprendizado por reforço \cite{Yu2026}; e um sistema que detecta em vídeo, com visão computacional, a infraestrutura de vendedores de comida de rua, como pias para lavar as mãos e reservatórios de água, e usa LLMs visuais para avaliar sua conformidade com padrões de segurança dos alimentos \cite{Chernikov2025}. Este último é o único dos estudos incluídos que usa imagens como evidência de conformidade sanitária.
+
+A Tabela~\ref{tab:rsl-comparacao} compara este trabalho com os estudos mais próximos. Nenhum dos estudos incluídos gera pareceres técnicos sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis. Além dos trabalhos do grupo na PDSA-RS \cite{Montero2025,Montero2026}, que trataram de processos estaduais de sanidade animal sem evidências fotográficas, nenhum estudo aplica RAG a pareceres técnicos no domínio sanitário. Este trabalho trata da certificação federal de embarcações pesqueiras na PNIP, avaliando o efeito do contexto normativo recuperado e das fotos sobre a sugestão do modelo e tomando como referência as decisões e os pareceres dos analistas.
+
+\begin{table}[htb]
+	\centering
+	\caption{Comparação entre este trabalho e os estudos mais próximos.}
+	\label{tab:rsl-comparacao}
+	\footnotesize
+	\setlength{\tabcolsep}{3pt}
+	\begin{tabular}{|L{0.16\textwidth}|L{0.2\textwidth}|L{0.18\textwidth}|L{0.13\textwidth}|L{0.08\textwidth}|L{0.16\textwidth}|}
+		\hline
+		\textbf{Trabalho} & \textbf{Domínio} & \textbf{Tarefa} & \textbf{Recuperação} & \textbf{Imagens} & \textbf{Referência} \\
+		\hline
+		\citeonline{Montero2025} & Certificação avícola (PDSA-RS) & Verificar exames de solicitações & RAG & Não & Avaliação de especialista \\
+		\hline
+		\citeonline{Montero2026} & Recursos administrativos (SEAPI-RS) & Redigir pareceres & Simulada (contexto manual) & Não & Decisões dos analistas \\
+		\hline
+		\citeonline{Fiddina2026} & Normas governamentais (Indonésia) & Perguntas e respostas & RAG por artigo & Não & Gabarito de perguntas e respostas \\
+		\hline
+		\citeonline{Memari2026} & Retenção de dados (Utah, EUA) & Conformidade & RAG multiagente & Não & Consultas sintéticas (RAGAS) \\
+		\hline
+		\citeonline{Sheng2026} & Projetos de investimento (China) \verificar{país} & Avaliar estudos de viabilidade & Não descrita & Não & Notas de especialistas \\
+		\hline
+		\citeonline{Shen2026} & Segurança dos alimentos & Várias (\textit{benchmark}) & Não (\textit{fine-tuning}) & Não & \textit{Benchmark} de 10 tarefas \\
+		\hline
+		\citeonline{Chernikov2025} & Comida de rua (Índia) & Avaliar infraestrutura & Não descrita & Sim (vídeo) & Questionário de campo \\
+		\hline
+		\textbf{Este trabalho} & Certificação HS de embarcações (PNIP) & Sugerir decisão e redigir parecer & RAG por artigo, consultas por processo & Sim (fotos) & Decisões e pareceres dos analistas \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
