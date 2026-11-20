@@ -1,0 +1,57 @@
+% ============================================================
+% Capítulo 6 - Considerações Finais
+% Base: artigo ICEIS (artigo-iceis-guedes/main.tex), Seções 5 e 6 (versão de 16/11/2026),
+% com detalhes das dificuldades que ficaram fora do artigo por limite de páginas (memory.md).
+% ============================================================
+\chapter{Considerações Finais}
+\label{cap:consideracoes}
+
+Este capítulo reúne as dificuldades encontradas durante o trabalho, as limitações do estudo, os trabalhos futuros e as conclusões.
+
+% ------------------------------------------------------------
+\section{Dificuldades encontradas}
+\label{sec:dificuldades}
+
+\textbf{Plataforma.} A plataforma não guardava a posição dos documentos de uma tarefa, de modo que, na primeira rodada, as imagens chegaram aos modelos em ordem indefinida. A posição passou a ser armazenada, e o número de cada foto passou a ser escrito na própria imagem, porque, mesmo em ordem, o Gemma perdia a conta das fotos sem rótulo: em um processo com 67 fotos, a ``foto 10'' dele era a 14ª. Outros parâmetros também eram ignorados: o número de trechos e o limiar de similaridade definidos no \textit{workflow} não chegavam à recuperação, e a biblioteca Spring AI 1.0 não desligava o modo de raciocínio do Ollama. Com o raciocínio ligado, o Gemma esgotava os \textit{tokens} de saída antes de responder e quase deixava de citar as fontes, o que levou a reescrever o adaptador sobre a API nativa (Seção~\ref{sec:execucao}). Por fim, o extrator de recomendações da plataforma procurava os rótulos como subcadeias, e ``DEFERIR'' está contido em ``INDEFERIR''; no estudo, a decisão foi lida da linha final da resposta.
+
+\textbf{Dados.} Cerca de um terço dos PDFs eram digitalizados e exigiram OCR, com qualidade variável. As normas se sobrepõem: a Portaria 310/2020 foi alterada duas vezes, e a 171/2023 revogou artigos dela, o que levou a indexar o texto consolidado. A lista de verificação preenchida pelo técnico não discrimina os processos: nos 40 processos, ela tem 386 respostas ``Sim'', 106 ``Não se aplica'' e nenhum ``Não'', tanto nos deferidos quanto nos indeferidos.
+
+\textbf{Modelos e infraestrutura.} Cada foto ocupou cerca de 270 \textit{tokens} no Gemma e 1.040 no Qwen; com 74 fotos, um único processo levou mais de uma hora no Qwen, porque o modelo deixou de caber na memória, o que levou ao limite de 30 fotos por tarefa. A posição do pedido de citação no \textit{prompt} também importou: com o pedido apenas antes de um dossiê longo, um modelo Qwen menor, só de texto, não citou a norma em nenhuma de suas 20 respostas; repetido junto da instrução final, produziu 167 marcadores, o que está de acordo com \citeonline{Liu2024}. O \textit{hardware} disponível (uma estação de trabalho com 24~GB de memória unificada) limitou o tamanho dos modelos abertos e fez cada rodada com fotos levar horas. Os modelos hospedados, por sua vez, envolveram custo e limites de uso: no plano gratuito do Gemini, as chamadas falhavam por excesso de demanda e a cota diária acabava antes do fim de uma rodada, e, já no plano pago, o limite de gasto mensal do projeto interrompeu uma condição, refeita depois de ampliado o limite.
+
+% ------------------------------------------------------------
+\section{Limitações}
+\label{sec:limitacoes}
+
+\textbf{Amostra e desenho.} Foram usados apenas 40 processos (20 na primeira rodada e nos rascunhos), de uma única instância da PNIP, e uma execução por processo e modelo na maior parte das condições, de modo que os intervalos de Wilson não separam condições nem modelos do acaso.
+
+\textbf{Entradas.} Os dossiês foram truncados em 60.000 caracteres (19 de 40). A norma tem apenas 49 trechos, poucos o bastante para caber inteira no \textit{prompt}, e a recuperação não tem reranqueamento.
+
+\textbf{Modelos e configuração.} Os modelos locais diferem em tamanho e quantização e foram servidos com o \textit{cache} de chaves e valores em 8 bits, e o tamanho e a quantização dos modelos hospedados não são divulgados, de modo que a comparação entre modelos é confundida por essas diferenças. O Gemini rodou com raciocínio mínimo, e o Gemini e o Claude Haiku com a temperatura padrão, por isso suas decisões variam entre execuções, em até 5 de 40 processos nas duas condições repetidas. O \textit{prompt} foi escrito para este estudo e não foi otimizado. O Qwen foi descartado depois da primeira rodada, antes de as fotos serem numeradas.
+
+\textbf{Medição.} O gabarito é a decisão final de analistas humanos, que pode ser inconsistente e também considerou complementos ausentes do dossiê. A classificação de cada requisito (a primeira dada na resposta) e as marcações da lista de verificação foram lidas automaticamente das respostas, e a referência da recuperação, o artigo que estabelece cada requisito, foi definida pelo autor. Os rascunhos usaram um \textit{prompt} diferente do das execuções de decisão.
+
+% ------------------------------------------------------------
+\section{Trabalhos futuros}
+\label{sec:trabalhos-futuros}
+
+O estudo mostra que a arquitetura é viável, mas que levar ao modelo as normas, as fotos e uma lista das evidências esperadas não basta para que ele reproduza a decisão. Como continuidade, propõe-se:
+
+\begin{enumerate}
+	\item avaliar contra a primeira análise do analista, prevendo item a item as solicitações de complementos, em vez da decisão binária final;
+	\item ampliar o corpus para normas relacionadas, como as de potabilidade da água e de controle de pragas, quando a norma inteira deixar de caber no \textit{prompt}, e reordenar os trechos por requisito;
+	\item validar as fotos citadas e a linha de recomendação contra o que a plataforma enviou;
+	\item avaliar, em um estudo posterior, a acurácia e a correção dos rascunhos com mais processos e várias execuções por processo;
+	\item avaliar com analistas da PNIP se os rascunhos são úteis em seu trabalho.
+\end{enumerate}
+
+% ------------------------------------------------------------
+\section{Conclusão}
+\label{sec:conclusao}
+
+Este trabalho apresentou o DocFlow, que transforma a arquitetura conceitual de \citeonline{Montero2026} em uma plataforma implementada, com um monólito modular, LLMs multimodais que recebem as fotos como imagens e revisão humana como contrato da API, e que foi estendida para a PNIP com segmentação por artigo, consultas de recuperação derivadas de cada processo, entrada de imagens e adaptadores para modelos locais e hospedados.
+
+Em relação aos objetivos específicos (Seção~\ref{sec:objetivos}), o corpus normativo da certificação HS foi indexado por artigo, com a origem de cada trecho preservada e citável; o DocFlow foi estendido para recuperar as normas a partir dos documentos de cada processo e para enviar as fotos aos modelos como imagens; um modelo aberto, executado em infraestrutura própria, e três modelos hospedados foram avaliados em 40 processos já decididos, com e sem o contexto normativo e as fotos; e a recuperação e os rascunhos de parecer foram comparados com os artigos de cada requisito e com os pareceres finais dos analistas.
+
+Quanto à questão de pesquisa, a resposta, nesta amostra, é negativa. O estudo de viabilidade mostrou que a plataforma funciona de ponta a ponta com modelos locais e hospedados: a recuperação a partir de cada processo encontrou o artigo do requisito com mais frequência do que uma consulta fixa (235 contra 161 de 332 categorias de documento), as citações apontaram para trechos recuperados, os modelos usaram as fotos e os rascunhos seguiram o formato do parecer técnico da PNIP. Mas nenhuma condição diferiu significativamente do acaso na decisão, e os rascunhos apontaram no máximo 4 dos 71 itens apontados pelos analistas, que em sua maioria solicitaram complementos. Esses resultados são uma linha de base, e não um veredito sobre a arquitetura: como os dossiês deferidos e indeferidos estavam ambos incompletos quando enviados, o que os analistas decidem na primeira análise é quanto de evidência aceitam e o que pedem de complemento, e é contra essa análise que os rascunhos devem ser avaliados. O pequeno número de processos e o corpus normativo reduzido limitam o alcance desses resultados.
+
+Comparado aos trabalhos anteriores do grupo na PDSA-RS, em que o RAG melhorou de forma expressiva a acurácia de um modelo local \cite{Montero2025}, este trabalho mostra que o ganho não se transfere automaticamente para processos em que a decisão depende do julgamento sobre documentos e fotografias, e não da aplicação da norma a dados estruturados. Relatar esse resultado, junto com o que funcionou, ajuda a delimitar onde o RAG pode apoiar o trabalho dos analistas públicos e o que ainda precisa ser construído para isso.

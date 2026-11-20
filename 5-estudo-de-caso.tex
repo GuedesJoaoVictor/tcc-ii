@@ -1,0 +1,204 @@
+% ============================================================
+% Capítulo 5 - Estudo de Caso
+% Base: artigo ICEIS (artigo-iceis-guedes/main.tex), Seção 4 (versão de 16/11/2026).
+% Números: artigo-iceis-guedes/dados/ (revisao3-40casos, recuperacao-40casos,
+% concordancia-itens-40casos, comparacao-fotos-rag-20casos, rascunhos-ragc-20casos,
+% variacao-execucoes-40casos). Ao mudar um número, conferir no artigo e nos JSONs.
+% ============================================================
+\chapter{Estudo de Caso}
+\label{cap:estudo-caso}
+
+Este capítulo relata a aplicação do DocFlow à certificação higiênico-sanitária de embarcações na PNIP. A Seção~\ref{sec:desenho} descreve o desenho do estudo; as Seções~\ref{sec:resultados} a~\ref{sec:rascunhos} apresentam os resultados das decisões, das fotografias e dos rascunhos de parecer; e a Seção~\ref{sec:discussao} os discute.
+
+% ------------------------------------------------------------
+\section{Desenho do estudo}
+\label{sec:desenho}
+
+O estudo avaliou a viabilidade da plataforma sem interferir em nenhum processo em andamento: se ela processa dossiês reais de ponta a ponta, recupera os artigos aplicáveis, usa as fotos e cita suas fontes. A acurácia das decisões é relatada como linha de base para trabalhos futuros, e não como medida da arquitetura. Dado o dossiê de um processo de certificação HS já decidido, a tarefa do modelo é sugerir \textit{deferimento} ou \textit{indeferimento}, e a decisão do analista serve de gabarito. A opção de solicitar complementos foi retirada para que a decisão fosse binária: em um piloto com três classes, o modelo escolheu ``complemento'' na maioria dos casos.
+
+\subsection{Processos}
+
+Foram selecionados 40 processos decididos da base da PNIP, 20 deferidos e 20 indeferidos, tomando os primeiros de cada classe na ordem de seus identificadores aleatórios (UUIDs) e pulando um processo com dossiê vazio. Foram excluídos os indeferimentos por perda do prazo de complementação, cuja decisão não depende do conteúdo, e os indeferimentos cuja única não conformidade era nos registros fotográficos, critério definido antes de as fotos entrarem na análise. Mesmo assim, em 11 dos 20 indeferidos o analista apontou uma não conformidade nos registros fotográficos, junto com outras. Como a amostra é balanceada, deferir ou indeferir sempre resulta em 50\% de acurácia.
+
+\subsection{Dossiê e fotografias}
+
+Para cada processo, foi montado um texto com os anexos das categorias examinadas na análise técnica: programa de autocontrole (PAC), declaração de responsabilidade, treinamento da tripulação, registros de controle a bordo, documento do material de revestimento, laudo de potabilidade da água, declaração do fornecedor de água, controle de pragas e outros documentos. Cada documento foi limitado a 12.000 caracteres e o dossiê a 60.000, e o dossiê informa quantas fotografias o processo tem. Os documentos digitalizados passaram por OCR com o Tesseract, e todos os dossiês dos 20 primeiros processos tinham ao menos um arquivo nessa situação.
+
+As fotografias (1.205 nos 40 processos, de 1 a 130 por processo) tiveram a orientação corrigida e foram reduzidas a 768 pixels no lado maior. Por causa do uso de memória do Qwen (Seção~\ref{sec:dificuldades}), cada tarefa recebeu no máximo 30 fotos, escolhidas a intervalos regulares ao longo da sequência do processo, o que afetou 12 dos 40 processos; o \textit{prompt} avisa o modelo quando ele recebe uma amostra.
+
+Os campos preenchidos pelo analista (parecer técnico, não conformidades e solicitações de complementos) foram excluídos, para que o gabarito não vazasse para a entrada. O dossiê também deixa de fora os complementos enviados depois da primeira análise, que a decisão final levou em conta em 22 dos 40 processos (12 deferidos e 10 indeferidos); em 5 desses 12 deferidos, faltavam no dossiê categorias inteiras de documentos.
+
+\subsection{Corpus normativo e recuperação}
+
+O corpus normativo é a Portaria SAP/MAPA nº~310/2020 consolidada com as Portarias MPA nº~171/2023 e nº~742/2026, que já incorpora as alterações e revogações, mais os anexos originais de 2020, que contêm a lista de verificação. A Portaria 742/2026, publicada depois de 35 das 40 decisões, apenas acrescenta requisitos para a secagem de bexiga natatória e o congelamento de camarão e lagosta a bordo, nenhum deles entre os requisitos avaliados aqui \verificar{conferir na portaria se é lagosta ou lagostim}. Segmentados por artigo (Seção~\ref{sec:base-conhecimento}), esses textos resultam em 49 trechos.
+
+A recuperação usa consultas derivadas do processo: uma por categoria de documento presente no dossiê, mais o cabeçalho do dossiê, que informa quantas fotografias o processo tem, cada uma retornando seus 2 trechos mais similares. Os \textit{embeddings} são calculados localmente com o BGE-M3 \cite{Chen2024}. Os 40 processos receberam 37 conjuntos distintos de trechos, com mediana de 10 por processo (de 6 a 13). Em uma primeira rodada, a consulta foi a instrução fixa do \textit{workflow}, que pergunta quais evidências e requisitos a Portaria 310/2020 exige, com \textit{embeddings} do \texttt{gemini-embedding-001}; ela retornou os mesmos oito trechos para todos os processos e foi mantida como linha de base (RAG com consulta \textit{fixa}).
+
+\subsection{Modelos e condições}
+
+Foram usados dois modelos de pesos abertos com entrada de imagem: o Gemma~4~26B-A4B (quantizado em nvfp4), um modelo de mistura de especialistas com cerca de 4 bilhões de parâmetros ativos por \textit{token}, e a variante \textit{instruct} do Qwen3-VL-8B (quantizado em Q4\_K\_M), ambos servidos pelo Ollama em uma estação de trabalho com 24~GB de memória unificada. Uma primeira rodada, nos 10 primeiros processos de cada classe, cruzou para os dois o contexto normativo recuperado (consulta fixa) e as fotos, e serviu para escolher o modelo aberto (Seção~\ref{sec:resultados}).
+
+A avaliação principal executou o Gemma nos 40 processos junto com três modelos hospedados de referência: o GPT-6 Luna (API da OpenAI) e o Claude Haiku~5.5 (API da Anthropic), ambos com o raciocínio desligado, e o Gemini~3.5 Flash-Lite (\textit{endpoint} do Google compatível com a OpenAI), com raciocínio mínimo, já que nesse modelo ele não pode ser desligado. O Claude Haiku usou a temperatura padrão, porque sua API rejeita o parâmetro, e o Gemini a temperatura padrão recomendada pelo provedor para essa família de modelos; os demais modelos rodaram com o raciocínio desligado e os parâmetros da Tabela~\ref{tab:parametros}. Para os modelos hospedados, os dossiês e as fotos foram enviados às APIs dos provedores.
+
+\begin{table}[htb]
+	\centering
+	\caption{Configuração do estudo de caso.}
+	\label{tab:parametros}
+	\small
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{Parâmetro} & \textbf{Valor} \\
+		\hline
+		\textit{Embedding} & BGE-M3, local (consulta fixa: \texttt{gemini-embedding-001}) \\
+		Top-$k$ / limiar & 2 por consulta (consulta fixa: 8) / 0 \\
+		LLMs & Gemma~4~26B-A4B; Qwen3-VL-8B (primeira rodada); \\
+		 & GPT-6 Luna; Gemini~3.5 Flash-Lite; Claude Haiku~5.5 \\
+		Temperatura & 0 (Gemini e Claude Haiku: padrão) \\
+		Saída / contexto & 16.384 / 65.536 \textit{tokens} \\
+		Fotos por tarefa & até 30 (768 pixels) \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+Cada modelo respondeu sem fotos e com até 30 fotos em ordem e numeradas (Seção~\ref{sec:dificuldades}), em cada caso sem contexto normativo, com os trechos recuperados pela consulta fixa e com os recuperados a partir do processo; sem fotos, também com a norma inteira no \textit{prompt} (os 49 trechos do índice), para verificar se a recuperação era o gargalo. Os \textit{prompts} diferem apenas nos blocos correspondentes, colocados junto da instrução final, depois do dossiê: o contexto rotulado, com o pedido de citá-lo como \texttt{[Source: arquivo, Art.~N]}, e o pedido de examinar as fotos, classificar o requisito ``registros fotográficos'' e citá-las como \texttt{[Foto~N]}. O modelo verifica cada requisito (atende, não atende ou não verificável), lista as não conformidades e decide, em uma execução por processo e condição (três em duas condições do Gemini e do Claude Haiku, Seção~\ref{sec:resultados}).
+
+Para testar a hipótese da completude, isto é, de que a decisão depende de o dossiê conter todas as evidências exigidas, os modelos também foram solicitados a marcar, antes de decidir, cada um dos 12 documentos e das 13 vistas fotográficas esperados pelo texto de ajuda do formulário de solicitação da PNIP como presente, ausente ou não aplicável. Isso foi feito sem fotos e com todas as fotos numeradas de cada processo, além de uma execução com todas as fotos e sem a lista.
+
+\subsection{Métricas}
+
+O indeferimento foi tomado como classe positiva, e foram calculadas a acurácia, a sensibilidade e a especificidade. Com 40 processos, o intervalo de confiança de Wilson de 95\% \cite{Wilson1927} para 20 acertos vai de 0,352 a 0,648. De forma equivalente, o teste binomial exato só distingue uma condição do acaso com 13 acertos ou menos ou com 27 ou mais; seu poder para detectar uma acurácia real de 0,65 é de 0,44, e seriam necessários cerca de 90 processos para um poder de 0,8. Como condições e modelos são avaliados nos mesmos processos, seus acertos foram comparados pelo teste exato de McNemar \cite{McNemar1947}.
+
+Para as citações à norma, foram contados os marcadores \texttt{[Source: ...]} que indicam um arquivo e um artigo e verificado se estão entre os trechos do \textit{prompt}; isso mede a \textit{existência} da fonte no contexto, e não sua pertinência. Para a recuperação, verificou-se, para cada categoria de documento presente em um dossiê e para os registros fotográficos, se os trechos recuperados incluem o artigo que estabelece o requisito (por exemplo, o Art.~8 para o treinamento da tripulação e o Art.~9 para o controle de pragas). Para as fotos, foram contadas as referências \texttt{[Foto~N]}, separando as que apontam para fotos não enviadas, e a classificação dada ao requisito ``registros fotográficos'' foi comparada com as não conformidades registradas pelo analista. Ao contrário do padrão da plataforma, a decisão foi lida da linha final de recomendação, porque ``DEFERIR'' está contido em ``INDEFERIR''; respostas sem essa linha contam como erro.
+
+Os \textit{prompts}, o corpus normativo, os resultados agregados e um simulador do \textit{pipeline} sobre dossiês sintéticos estão disponíveis em \url{https://github.com/GuedesJoaoVictor/iceis-2027-sit} \verificar{confirmar se o repositório fica público com esse endereço ou se o TCC usa o link anônimo}. Os dossiês, as fotos e as respostas dos modelos não foram publicados, porque contêm documentos de terceiros.
+
+% ------------------------------------------------------------
+\section{Resultados}
+\label{sec:resultados}
+
+\subsection{Primeira rodada}
+
+A primeira rodada, nos 20 primeiros processos, com as fotos fora de ordem e a consulta fixa, não encontrou efeito detectável das fotos nem do RAG (McNemar com $p$ entre 0,34 e 1,0), como mostra a Tabela~\ref{tab:primeira-rodada}. O Qwen entrou em laços de repetição \cite{Holtzman2020} sem chegar à linha de recomendação em 1 a 7 processos por condição, e 414 de suas 1.257 referências a fotos apontavam para fotos que ele não havia recebido, por isso a avaliação principal seguiu com o Gemma. O Qwen não foi testado depois com as fotos numeradas (Seção~\ref{sec:dificuldades}), de modo que esse resultado reflete tanto a configuração da primeira rodada quanto o modelo.
+
+\begin{table}[htb]
+	\centering
+	\caption{Primeira rodada: acurácia nos 20 primeiros processos, com as fotos fora de ordem e a consulta fixa (respostas sem decisão entre parênteses).}
+	\label{tab:primeira-rodada}
+	\small
+	\begin{tabular}{|l|c|c|c|c|}
+		\hline
+		\textbf{Modelo} & \textbf{Texto} & \textbf{Texto + RAG} & \textbf{Fotos} & \textbf{Fotos + RAG} \\
+		\hline
+		Gemma~4~26B-A4B & 0,50 (0) & 0,55 (0) & 0,40 (0) & 0,55 (0) \\
+		Qwen3-VL-8B & 0,30 (1) & 0,40 (4) & 0,40 (5) & 0,20 (7) \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+\subsection{Avaliação principal}
+
+Na avaliação principal (Tabela~\ref{tab:resultados}), nenhuma condição diferiu significativamente do acaso, nem mesmo a menor contagem (14 de 40, Gemma com todas as fotos); uma regra que indefere todo processo com alguma categoria de anexo ausente chega a 0,45. O Gemma tende a deferir (sensibilidade de 0,10 a 0,25 sem a lista de verificação). O Claude Haiku indeferiu todos os processos em todas as condições, exceto um processo com fotos e recuperação a partir do processo, e o GPT-6 Luna todos, exceto 3 com a norma inteira, ao passo que o Gemini deferiu quase todos, com sensibilidade de 0,05 a 0,15 sem a lista. Nenhuma condição diferiu significativamente dentro de um modelo nem em relação ao Gemma ($p\ge0{,}092$).
+
+\begin{table}[htb]
+	\centering
+	\caption{Acertos nos 40 processos (indeferimentos sugeridos entre parênteses), nas execuções com as fotos em ordem e numeradas. Vinte acertos é o nível do acaso, e contagens de 14 a 26 não diferem dele (teste binomial exato). Fixa e processo: recuperação com a consulta fixa e com consultas derivadas do processo; lista: evidências esperadas marcadas antes de decidir; todas as fotos: todas as fotos do processo.}
+	\label{tab:resultados}
+	\small
+	\begin{tabular}{|l|c|c|c|c|}
+		\hline
+		\textbf{Condição} & \textbf{Gemma} & \textbf{GPT-6 Luna} & \textbf{Gemini} & \textbf{Claude Haiku} \\
+		\hline
+		Texto & 20 (8) & 20 (40) & 20 (4) & 20 (40) \\
+		\quad + RAG, fixa & 21 (7) & 20 (40) & 20 (2) & 20 (40) \\
+		\quad + RAG, processo & 21 (7) & 20 (40) & 22 (2) & 20 (40) \\
+		\quad + norma inteira & 19 (5) & 19 (37) & 21 (3) & 20 (40) \\
+		\quad + lista & 18 (18) & 20 (40) & 16 (24) & 20 (40) \\
+		Fotos (30) & 15 (15) & 20 (40) & 18 (4) & 20 (40) \\
+		\quad + RAG, fixa & 18 (6) & 20 (40) & 19 (3) & 20 (40) \\
+		\quad + RAG, processo & 19 (11) & 20 (40) & 19 (3) & 21 (39) \\
+		Todas as fotos & 14 (14) & 20 (40) & 21 (5) & 20 (40) \\
+		\quad + lista & 15 (17) & 20 (40) & 20 (14) & 20 (40) \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+Em três execuções de duas condições (texto; fotos com recuperação a partir do processo), a decisão mudou em 5 e 3 dos 40 processos no Gemini e em 0 e 1 no Claude Haiku, com 18 a 21 acertos por execução; a Tabela~\ref{tab:resultados} traz a primeira execução. Os indeferimentos do GPT-6 Luna e do Claude Haiku se baseiam no conteúdo: nos 20 primeiros processos, o GPT-6 Luna descreveu as planilhas de controle de bordo como formulários-modelo em branco em todos os 10 deferidos, assim como em 9 dos 10 indeferidos. O Gemma não se saiu melhor com as fotos em ordem e numeradas do que sem fotos (0,375 contra 0,50, $p=0{,}18$).
+
+\subsection{Recuperação}
+
+A recuperação a partir do processo encontrou o artigo que estabelece o requisito para 235 das 332 categorias de documento presentes nos 40 dossiês (0,708). Para isolar o efeito das consultas, a consulta fixa foi repetida com os mesmos \textit{embeddings} e com tantos trechos quantos cada processo havia recebido: ela encontrou o artigo para 161 (0,485), e nunca os artigos sobre treinamento, material de revestimento ou pragas. Como foi executada para a Tabela~\ref{tab:resultados}, com outros \textit{embeddings} e oito trechos, encontrou o artigo para 118 (0,355). Um sorteio de igual número de trechos chegaria a 0,340 (0,285 para oito). As falhas da recuperação a partir do processo se concentram no controle de pragas (artigo encontrado em 3 de 29 dossiês), no treinamento da tripulação (13 de 40) e no material de revestimento (14 de 37).
+
+Mesmo assim, as decisões não mudaram (Tabela~\ref{tab:resultados}), sem diferença significativa em relação ao mesmo modelo sem RAG ou com a consulta fixa ($p\ge0{,}289$). Todos os modelos citaram a norma: com a recuperação a partir do processo, cada modelo escreveu de 71 a 622 marcadores com arquivo e artigo por condição, e todos, exceto 15, apontavam para trechos recuperados.
+
+\subsection{Nível dos requisitos}
+
+As respostas também classificam cada requisito, o que permitiu compará-las com os itens dos pareceres finais dos analistas, disponíveis para 39 dos 40 processos. Dos 351 itens (nove requisitos por processo, os itens 3.1 a 3.9 do parecer, que o formulário de solicitação detalha nas 13 vistas e em 11 dos 12 documentos, pertencendo o décimo segundo ao item 3.10; os registros fotográficos apenas nas condições com fotos), os analistas apontaram 129 como não conformes ou como exigindo complementos, 99 deles solicitações de complementos.
+
+O Gemma e o Gemini classificaram como não atendidos ou não verificáveis quase nenhum dos itens apontados pelos analistas (revocação de 0,01 a 0,09; $\kappa$ de Cohen \cite{Cohen1960} de $-0{,}013$ a 0,059). O GPT-6 Luna e o Claude Haiku apontaram tantos itens quanto os analistas ou mais e recuperaram de 0,39 a 0,64 dos apontamentos dos analistas, mas com precisão de 0,37 a 0,47, próxima da proporção de itens apontados (0,37), e $\kappa$ de 0,057 a 0,223: indeferem por muitos motivos, só em parte os dos analistas.
+
+% ------------------------------------------------------------
+\section{Evidências fotográficas}
+\label{sec:fotos}
+
+Os modelos usaram as fotos: com as 30 fotos em ordem e numeradas e sem RAG, eles se referiram a fotos em 30 a 39 das 40 respostas (de 122 a 612 referências por modelo), e nenhum citou uma foto que não havia recebido.
+
+No requisito ``registros fotográficos'', porém, os modelos não reproduziram o julgamento dos analistas, e as não conformidades registradas por eles explicam a divergência. Um processo pode ter mais de um motivo: em 9 dos 11 indeferidos com não conformidade nas fotos, os analistas apontam a \textit{ausência} de vistas obrigatórias da embarcação; em 5, a data ou a origem das fotos, que em 3 processos repetiam fotos de outros processos; e em apenas 2, um defeito visível nas imagens. Com as 30 fotos em ordem e numeradas e sem RAG, os modelos classificaram o requisito como não atendido em no máximo 4 desses 11 processos e em até 6 dos 20 deferidos.
+
+A lista das evidências esperadas não melhorou a decisão (Tabela~\ref{tab:resultados}). Com todas as fotos, os modelos marcaram alguma vista esperada como ausente ou não verificável em 14 a 20 dos 20 deferidos e em 14 a 20 dos 20 indeferidos. A lista aponta, portanto, lacunas nos dossiês iniciais das duas classes.
+
+% ------------------------------------------------------------
+\section{Rascunhos de parecer e os pareceres dos analistas}
+\label{sec:rascunhos}
+
+Para ver o que cobre um parecer escrito pelo modelo, o Gemma redigiu rascunhos de parecer técnico para os 10 primeiros processos de cada classe, com todas as fotos de cada processo em ordem e numeradas e um \textit{prompt} que reproduz a estrutura do parecer técnico da PNIP, sem contexto normativo e com os trechos recuperados a partir do processo (20 conjuntos distintos). O rascunho avalia os dados da embarcação (item 3.0), cada uma das dez categorias de documentos (itens 3.1 a 3.10) e cada item da lista de verificação preenchida pelo técnico como conforme, não conforme ou com solicitação de complementos, e termina com uma conclusão favorável ou desfavorável. Os rascunhos foram comparados item a item com os pareceres finais dos analistas, disponíveis para 19 dos processos; um ``não se aplica'' do modelo conta como conforme.
+
+\begin{table}[htb]
+	\centering
+	\caption{Itens apontados como não conformes ou com solicitação de complementos pelos pareceres finais dos analistas e pelos rascunhos sem e com recuperação a partir do processo (+ RAG), nos 19 processos com parecer; entre parênteses, os itens também apontados pelo analista. Nos itens 3.0 a 3.10 as contagens são números de processos; a linha da lista de verificação soma seus itens, até 14 por processo.}
+	\label{tab:rascunhos}
+	\small
+	\begin{tabular}{|l|c|c|c|}
+		\hline
+		\textbf{Item} & \textbf{Analistas} & \textbf{Rascunhos} & \textbf{+ RAG} \\
+		\hline
+		3.0 Dados da embarcação & 2 & 0 & 0 \\
+		3.1 Programa de autocontrole & 8 & 0 & 0 \\
+		3.2 Registros de controle a bordo & 8 & 1 & 1 \\
+		3.3 Registros fotográficos & 11 & 0 & 0 \\
+		3.4 Treinamento da tripulação & 6 & 0 & 0 \\
+		3.5 Material de revestimento & 6 & 1 & 2 \\
+		3.6 Controle de pragas & 2 & 5 (1) & 4 (1) \\
+		3.7 Laudo de potabilidade da água & 7 & 2 (1) & 3 (2) \\
+		3.8 Declaração do fornecedor de água & 6 & 5 (1) & 3 \\
+		3.9 Declaração de responsabilidade & 6 & 0 & 0 \\
+		3.10 Outros documentos & 2 & 0 & 1 (1) \\
+		Lista de verificação (4.1 a 7.4) & 7 & 5 & 7 \\
+		\hline
+		Total & 71 & 19 (3) & 21 (4) \\
+		\hline
+	\end{tabular}
+	\fonte{Elaborado pelo autor.}
+\end{table}
+
+A conclusão dos rascunhos coincidiu com a do analista em 8 dos 20 processos sem recuperação e em 12 com ela (McNemar, $p=0{,}125$), com 10 conclusões desfavoráveis nos dois casos: 4 e 6 em processos indeferidos, 6 e 4 em deferidos. Nenhum dos dois é significativamente melhor do que indeferir sempre (10 de 20), de modo que os rascunhos também não separaram as classes.
+
+Os rascunhos tampouco reproduziram os pareceres no nível dos itens (Tabela~\ref{tab:rascunhos}): dos 411 itens comparados (itens 3.0 a 3.10 e os itens da lista de verificação avaliados no parecer e nos dois rascunhos), os analistas apontaram 71 e os rascunhos 19 e 21, dos quais apenas 3 e 4 também foram apontados pelo analista ($\kappa$ de Cohen de $-0{,}007$ e 0,009). Os analistas apontaram principalmente os registros fotográficos (11 dos 19 processos, mais do que os 5 indeferidos com não conformidade nas fotos entre esses 20, porque essa contagem inclui solicitações de fotos complementares em processos depois deferidos), ao passo que os rascunhos apontaram principalmente o controle de pragas e os documentos da água, e avaliaram os registros fotográficos como conformes em todos os processos. A maior parte dos apontamentos dos analistas (54 de 71) foram solicitações de complementos; os rascunhos avaliaram 51 e 50 desses 54 itens como conformes.
+
+Os rascunhos também diferem dos pareceres no estilo. O analista comenta apenas os itens em que há problema, às vezes com textos longos, como no PAC, enquanto o modelo comenta todos os itens, com comentários curtos. Boa parte do texto dos pareceres humanos é padronizada: frases que se repetem em vários pareceres do banco da PNIP.
+
+% ------------------------------------------------------------
+\section{Discussão}
+\label{sec:discussao}
+
+\textbf{Viabilidade.} A plataforma processou os 40 dossiês de ponta a ponta, em mais de 1.700 execuções com cinco modelos, locais e hospedados, atrás da mesma porta. A recuperação a partir de cada processo encontrou o artigo do requisito para 71\% das categorias de documento, todas as citações à norma, exceto 15, apontaram para trechos recuperados, os modelos se referiram às fotos que receberam, e os rascunhos seguiram a estrutura do parecer técnico da PNIP. As dificuldades encontradas pelo caminho (Seção~\ref{sec:dificuldades}) levaram a mudanças na plataforma, como guardar a ordem das imagens. A acurácia das decisões, porém, ficou no nível do acaso, como se discute a seguir.
+
+\textbf{O gabarito.} Parte da discordância pode estar no próprio gabarito: as decisões finais também consideraram complementos que os modelos não viram, e, nos deferidos cujo dossiê não tinha categorias inteiras de documentos, indeferir ou pedir complementos seria uma resposta defensável. Ainda assim, nos 18 dos 40 processos decididos sem complementos, 10 deles indeferidos, os modelos acertaram de 7 a 11, contra 10 de indeferir sempre.
+
+\textbf{As fotos.} As fotos também não melhoraram a decisão, embora os modelos as tenham examinado. A explicação mais plausível está no critério: os analistas verificam se as fotos cobrem as vistas exigidas. Como os rascunhos, com todas as fotos em ordem e numeradas, também julgaram os registros fotográficos conformes em todos os processos, a amostragem e a ordem das imagens dificilmente explicam o resultado. Fornecer as vistas esperadas, porém, não fez a decisão coincidir (Seção~\ref{sec:fotos}): os dossiês deferidos também estavam incompletos quando enviados, e sua complementação ocorreu na rodada de complementos, que a tarefa binária deixa de fora. O mesmo parece valer além das fotos: os rascunhos trataram a presença de um documento como cumprimento do requisito, enquanto o analista verifica se seu conteúdo o comprova. É também por isso que a regra baseada em categorias ausentes falha: 15 dos 20 indeferidos tinham todas as categorias, e 5 dos 7 deferidos que ela indefere receberam complementos depois. O que decide, portanto, não é só quais evidências são exigidas, mas quanto delas o analista aceita na primeira análise, em que a maioria dos apontamentos foi de solicitações de complementos (Seção~\ref{sec:rascunhos}). Prever essas solicitações item a item corresponderia melhor ao trabalho dos analistas do que uma decisão binária. No nível dos requisitos, porém, os modelos ainda estão longe disso: os lenientes não apontam quase nada, e os rigorosos concordam com os analistas pouco acima do acaso.
+
+\textbf{O RAG.} O RAG também não mudou a decisão, mesmo quando os trechos acompanharam o processo e incluíram o artigo do requisito para a maior parte das categorias de documento; com a norma inteira no \textit{prompt}, as decisões do Gemma sem fotos foram as mesmas que sem contexto normativo em 37 dos 40 processos. O limite, portanto, parece estar menos na recuperação do que naquilo que a norma fornece: ela enuncia requisitos, como água potável ou registros de treinamento auditáveis, mas não quanto de evidência os comprova, que é o que os analistas julgam. Esse resultado difere do obtido na PDSA-RS, em que o RAG elevou a acurácia de 12\% para 55\% \cite{Montero2025}: lá, a resposta correta decorria das normas aplicadas a dados estruturados de exames, e aqui depende de um julgamento sobre documentos e fotografias que a norma não descreve. O RAG ofereceu rastreabilidade, no sentido de que as citações apontam para trechos de fato recuperados, mas ela depende de onde fica o pedido de citação no \textit{prompt} (Seção~\ref{sec:dificuldades}).
+
+\textbf{Confiabilidade.} Na primeira rodada, com as fotos sem numeração, o Qwen deixou de responder em até 7 dos 20 processos de uma condição e citou fotos que não havia recebido, o que, em um parecer técnico, equivale a apontar evidências inexistentes; com a lista de verificação e sem fotos, o Gemini também citou fotos em 8 das 40 respostas, o Gemma em 3 e o Claude Haiku em 1. Em um assistente para analistas, essas referências precisam ser conferidas automaticamente contra o que a plataforma enviou antes de chegarem ao revisor.
