@@ -2,48 +2,31 @@
 % Capítulo 3 - Trabalhos Relacionados
 % Base: artigos do grupo em artigo-iceis-guedes/artigos-iceis/ (Montero2025iceis,
 % Montero2025, Montero2026) e a RSL (artigo-iceis-guedes/rsl.tex, RSL-Rayyan/).
-% Versão anterior, com o protocolo completo da RSL e o fluxo PRISMA, no histórico do git
-% (commit 4958c4d), caso a banca peça o detalhamento.
+% Versões mais longas no histórico do git: RSL completa com PRISMA (commit 4958c4d) e
+% versão detalhada dos trabalhos do grupo (commit 5ac1951).
 % ============================================================
 \chapter{Trabalhos Relacionados}
 \label{cap:trabalhos-relacionados}
 
-Este capítulo apresenta os trabalhos mais próximos deste. A Seção~\ref{sec:tr-grupo} analisa os trabalhos anteriores do grupo, dos quais este é continuação direta: o RAG na certificação avícola da PDSA-RS e a arquitetura de assistente para analistas proposta por \citeonline{Montero2026}, que deu origem ao DocFlow. A Seção~\ref{sec:rsl} resume uma revisão sistemática rápida sobre LLMs e RAG na administração pública, feita para situar o trabalho na literatura mais ampla, e a Seção~\ref{sec:tr-lacuna} compara este trabalho com os estudos mais próximos.
+Este capítulo analisa os trabalhos anteriores do grupo, dos quais este é continuação direta (Seção~\ref{sec:tr-grupo}), e resume uma revisão sistemática rápida sobre LLMs e RAG na administração pública (Seção~\ref{sec:rsl}).
 
 % ------------------------------------------------------------
 \section{Trabalhos Anteriores do Grupo}
 \label{sec:tr-grupo}
 
-A Seção~\ref{sec:pdsa} apresentou a PDSA-RS e o contexto em que esses trabalhos surgiram. Esta seção os examina com mais detalhe, com atenção às escolhas de projeto, à forma de avaliação e às limitações apontadas pelos próprios autores, porque são elas que orientaram as decisões deste trabalho.
-
 \subsection{RAG na certificação sanitária avícola}
 
-O primeiro trabalho integrou um sistema RAG ao módulo de certificação avícola da PDSA-RS \cite{Montero2025iceis}, e sua versão estendida detalha a implementação e a avaliação \cite{Montero2025}. A base de conhecimento reúne as Instruções Normativas nº~44/2001 e nº~78/2003, que definem os exames exigidos conforme a idade das aves e a finalidade da produção. Os textos foram indexados com o LlamaIndex em trechos de 1.024 caracteres com sobreposição de 200, isto é, por tamanho fixo e não pela estrutura da norma (Seção~\ref{sec:chunking}). Os \textit{embeddings} foram gerados com o \texttt{bge-large-en-v1.5} e armazenados no PostgreSQL com o pgvector, e a geração usou o LLaMA 3.1 8B Instruct, executado localmente pelo Ollama com temperatura 0,4, para que os dados dos produtores não saíssem da infraestrutura da universidade. Além das normas, a base passou a receber relatórios em linguagem natural gerados a partir dos dados estruturados de cada solicitação, como os resultados dos exames, de modo que a recuperação pudesse trazer tanto o requisito quanto a evidência do caso. A consulta é disparada por um botão na tela de análise e atendida por um \textit{endpoint} da API de certificação avícola \cite{Montero2025}.
+O primeiro trabalho integrou um sistema RAG ao módulo de certificação avícola da PDSA-RS \cite{Montero2025iceis,Montero2025}. As instruções normativas que definem os exames exigidos foram segmentadas em trechos de tamanho fixo (1.024 caracteres), indexadas no PostgreSQL com o pgvector e consultadas por um LLaMA 3.1 8B executado localmente. A base também recebeu relatórios em linguagem natural gerados a partir dos dados estruturados de cada solicitação, como os resultados dos exames. Em 100 solicitações avaliadas por um especialista, o modelo sem recuperação acertou 12 respostas, e com RAG, 55, com outras 20 parcialmente corretas. Das 25 incorretas, 15 vieram de erros de recuperação \cite{Montero2025}.
 
-A avaliação usou 100 solicitações sorteadas da plataforma, o que, segundo os autores, corresponde a cerca de um terço das solicitações enviadas pelos pouco mais de 300 estabelecimentos de genética avícola do estado. Um especialista do domínio classificou cada resposta como correta, parcialmente correta ou incorreta. O modelo sem recuperação acertou 12 das 100; com RAG, foram 55 respostas corretas, 20 parcialmente corretas e 25 incorretas. Das 25 incorretas, 15 vieram de erros de recuperação, em que o sistema trouxe trechos genéricos ou conflitantes em vez da cláusula exigida, e 10 de falhas de síntese, em que o modelo não chegou à conclusão certa mesmo com o contexto correto \cite{Montero2025}. Os próprios autores apontam como limitações o domínio único, a dependência da qualidade da recuperação e a persistência de alucinações, que torna indispensável a revisão do analista.
-
-Três características desse trabalho importam para a comparação com a PNIP. A decisão decorre da aplicação da norma a dados estruturados (quais exames foram feitos, em que idade e com que resultado), de modo que, recuperado o requisito certo, a resposta correta é em grande parte determinada. A segmentação por tamanho fixo e a principal causa de erro, a recuperação, motivaram a segmentação por artigo adotada depois pelo grupo e neste trabalho. E a referência da avaliação foi o julgamento de um especialista sobre cada resposta, e não a decisão registrada no processo.
+Para a comparação com a PNIP, importa que ali a decisão decorre da aplicação da norma a dados estruturados: recuperado o requisito certo, a resposta é em grande parte determinada. Além disso, a recuperação foi a principal fonte de erro, o que motivou a segmentação por artigo adotada depois pelo grupo e neste trabalho.
 
 \subsection{Pareceres em recursos administrativos}
 
-Em seguida, \citeonline{Montero2026} passaram de perguntas sobre requisitos à redação de pareceres. O trabalho propõe uma arquitetura de assistente para analistas do setor público, concebida como um módulo integrado ao sistema legado do órgão por meio de um \textit{gateway} de API, para que o assistente funcione dentro da interface que o analista já usa. A arquitetura tem quatro pilares:
+Em seguida, \citeonline{Montero2026} propuseram uma arquitetura de assistente para analistas do setor público, integrada ao sistema legado do órgão e composta por um \textit{pipeline} que converte documentos, imagens e áudios em texto, um núcleo RAG com a legislação segmentada por artigo, uma camada de anonimização alinhada à LGPD e uma etapa de revisão humana. A arquitetura era conceitual, e apenas o motor de geração foi avaliado: em 14 recursos administrativos da JAP/SEAPI-RS \verificar{o nome oficial da JAP}, o Gemini 2.5 Pro recebeu os documentos transcritos manualmente e as normas inteiras no \textit{prompt}, simulando uma recuperação ideal. As decisões foram as mesmas em três temperaturas, com 71,4\% de acurácia e $\kappa$ de Cohen de 0,317, abaixo dos 78,6\% de uma regra que mantém todos os autos, mas identificando dois dos três recursos providos. A análise qualitativa mostrou que o modelo podia ser convencido por argumentos incorretos da defesa, como a citação de uma lei já revogada. Os autores apontam como limitações a amostra pequena, a recuperação simulada, o uso de um único modelo e a falta de linhas de base \cite{Montero2026}.
 
-\begin{itemize}
-	\item um \textit{pipeline} multimodal, que converte tudo em texto: OCR para documentos digitalizados, um modelo de imagem para texto para as fotos e um modelo de fala para texto para os áudios;
-	\item um núcleo de raciocínio baseado em RAG, com a legislação segmentada no nível dos artigos e recuperada por similaridade de cosseno a partir dos argumentos do caso;
-	\item uma camada de governança de dados alinhada à LGPD, que remove dados pessoais com expressões regulares, para dados estruturados como o CPF, e com reconhecimento de entidades nomeadas baseado no BERTimbau, para nomes e outros dados não estruturados;
-	\item uma etapa de revisão humana, em que o analista revisa os resumos da infração e da defesa gerados pelo modelo antes de eles serem usados na redação da minuta.
-\end{itemize}
+\subsection{Deste trabalho em relação aos anteriores}
 
-Os autores deixam claro que essa arquitetura era conceitual e não havia sido implementada; o trabalho avaliou apenas o seu motor de geração \cite{Montero2026}. O experimento usou 14 recursos administrativos reais da Junta Administrativa de Recursos de Infrações (JAP) da SEAPI-RS \verificar{o nome oficial da JAP}, escolhidos por um especialista do órgão para cobrir casos simples e complexos, dos quais 11 tiveram o auto de infração mantido e 3 anulado. Os documentos de cada processo (auto de infração, evidências externas e defesa) foram transcritos manualmente para texto. O modelo foi o Gemini 2.5 Pro, e a recuperação foi \textit{simulada}: o texto integral da Lei estadual nº~13.467/2010 e do Decreto nº~52.434/2015 foi colocado no \textit{prompt}, para isolar a capacidade de raciocínio do modelo de eventuais erros de recuperação. A geração seguiu duas etapas, uma análise detalhada seguida da redação do parecer no modelo oficial da JAP, e foi repetida com temperaturas de 0,5, 1,0 e 1,5, com \textit{top-p} fixo em 0,8, totalizando 42 pareceres.
-
-As decisões foram as mesmas nas três temperaturas: 71,4\% de acurácia, $\kappa$ de Cohen de 0,317 e dois dos três recursos providos identificados. Os autores observam que essa acurácia fica abaixo dos 78,6\% de uma regra que mantém todos os autos, mas que essa regra não identificaria nenhum auto a anular, o que o $\kappa$ e a sensibilidade na classe minoritária capturam. Os pareceres tiveram similaridade de cosseno acima de 0,90 e BERTScore F1 entre 0,70 e 0,85 em relação aos pareceres humanos. A análise qualitativa, guiada por uma lista de nove perguntas, foi a mais reveladora: no caso de maior erro, a defesa se apoiava em uma lei já revogada, e o modelo aceitou o argumento mesmo tendo a legislação vigente no contexto; em outros casos, não reproduziu o raciocínio espaço-temporal do analista ou divergiu dele na aplicação da proporcionalidade da pena. Temperaturas menores produziram textos mais concisos e formais \cite{Montero2026}. Como limitações, os autores citam a amostra de 14 casos de um único órgão, a recuperação simulada, a avaliação de um único modelo, a falta de comparação direta com linhas de base e a ausência de avaliação da implantação.
-
-\subsection{Do assistente proposto a este trabalho}
-
-A arquitetura de \citeonline{Montero2026} foi depois implementada pelo seu primeiro autor como a plataforma DocFlow (Capítulo~\ref{cap:metodologia}), com mudanças em relação ao projeto original: um monólito modular em vez de serviços atrás de um \textit{gateway}, LLMs multimodais que recebem as imagens diretamente em vez de um modelo que as descreve em texto, e a revisão humana como contrato da API. Em paralelo, o grupo também propôs uma arquitetura que combina raciocínio baseado em casos e LLMs para a certificação de produtos pesqueiros \cite{Casanova2026}.
-
-Este trabalho aplica o DocFlow à PNIP e responde a várias das continuações apontadas por \citeonline{Montero2026}: a recuperação deixa de ser simulada e é implementada e medida, com segmentação por artigo e consultas derivadas de cada processo; a avaliação usa mais processos (40), vários modelos, abertos e hospedados, e linhas de base explícitas, como o acaso e uma regra baseada em categorias de documento ausentes; e a plataforma é avaliada de ponta a ponta sobre dossiês reais, sem transcrição manual. A Tabela~\ref{tab:tr-grupo} resume as diferenças.
+A arquitetura de \citeonline{Montero2026} foi implementada pelo seu primeiro autor como a plataforma DocFlow (Capítulo~\ref{cap:metodologia}). Este trabalho a aplica à PNIP e trata das limitações apontadas acima: a recuperação é implementada e medida, a avaliação usa 40 processos, vários modelos e linhas de base explícitas, e os dossiês reais, com documentos digitalizados e fotografias, são processados de ponta a ponta. A Tabela~\ref{tab:tr-grupo} resume as diferenças.
 
 \begin{table}[htb]
 	\centering
@@ -55,104 +38,30 @@ Este trabalho aplica o DocFlow à PNIP e responde a várias das continuações a
 		\hline
 		& \textbf{\citeonline{Montero2025}} & \textbf{\citeonline{Montero2026}} & \textbf{Este trabalho} \\
 		\hline
-		Processo & Certificação avícola (PDSA-RS) & Recursos de infrações (JAP/SEAPI-RS) & Certificação HS de embarcações (PNIP) \\
+		Processo & Certificação avícola (PDSA-RS) & Recursos de infrações (SEAPI-RS) & Certificação HS de embarcações (PNIP) \\
 		\hline
-		Tarefa & Verificar a condição sanitária de solicitações & Redigir parecer e decidir & Sugerir decisão e redigir parecer \\
+		Evidência & Dados estruturados de exames & Documentos transcritos manualmente & Documentos digitalizados e fotografias \\
 		\hline
-		Evidência & Dados estruturados de exames, convertidos em relatórios & Documentos transcritos manualmente & Dossiês com documentos digitalizados (OCR) e fotografias \\
+		Recuperação & RAG, trechos de tamanho fixo & Simulada (normas inteiras no \textit{prompt}) & RAG por artigo, com consultas derivadas do processo \\
 		\hline
-		Segmentação & Tamanho fixo (1.024 caracteres) & Por artigo (proposta) & Por artigo \\
+		Modelos & 1 local & 1 hospedado & 2 locais e 3 hospedados \\
 		\hline
-		Recuperação & RAG a partir de uma pergunta sobre a solicitação & Simulada (normas inteiras no \textit{prompt}) & RAG com consulta fixa e consultas por processo; norma inteira como controle \\
+		Amostra e referência & 100 solicitações; especialista & 14 recursos; decisões dos analistas & 40 processos; decisões e pareceres dos analistas \\
 		\hline
-		Imagens & Não & Previstas, convertidas em texto & Enviadas ao modelo como imagens \\
-		\hline
-		Modelos & LLaMA 3.1 8B (local) & Gemini 2.5 Pro (hospedado) & Gemma 4 e Qwen3-VL (locais); GPT-6 Luna, Gemini 3.5 Flash-Lite e Claude Haiku 5.5 (hospedados) \\
-		\hline
-		Amostra & 100 solicitações & 14 recursos & 40 processos (20 nos rascunhos) \\
-		\hline
-		Referência & Julgamento de especialista sobre cada resposta & Decisões e pareceres dos analistas & Decisões e pareceres dos analistas \\
-		\hline
-		Resultado principal & RAG elevou a acurácia de 12\% para 55\% & 71,4\% de acurácia, $\kappa=0{,}317$ & Decisões no nível do acaso; recuperação por processo melhor que a fixa \\
+		Resultado & Acurácia de 12\% para 55\% com RAG & 71,4\% de acurácia & Decisões no nível do acaso \\
 		\hline
 	\end{tabular}
-	\fonte{Elaborado pelo autor, a partir de \citeonline{Montero2025}, \citeonline{Montero2026} e do Capítulo~\ref{cap:estudo-caso}.}
+	\fonte{Elaborado pelo autor.}
 \end{table}
 
-A diferença mais importante, porém, está na natureza da decisão. Na certificação avícola, a resposta decorre de regras aplicadas a dados estruturados; nos recursos da JAP, de argumentos jurídicos confrontados com a legislação; na certificação HS, de um julgamento sobre se o conteúdo de documentos heterogêneos e de dezenas de fotografias é evidência suficiente de cada requisito. Se os ganhos obtidos nos dois primeiros cenários se transferem para o terceiro é a pergunta que este trabalho investiga (Seção~\ref{sec:problema}).
+A diferença mais importante está na natureza da decisão: na certificação avícola, ela decorre de regras aplicadas a dados; nos recursos da JAP, de argumentos confrontados com a legislação; na certificação HS, de um julgamento sobre se documentos e fotografias são evidência suficiente de cada requisito. Se os ganhos dos dois primeiros cenários se transferem para o terceiro é a pergunta deste trabalho (Seção~\ref{sec:problema}).
 
 % ------------------------------------------------------------
 \section{Revisão Sistemática Rápida}
 \label{sec:rsl}
 
-Para situar este trabalho além do grupo, foi conduzida, em conjunto com o coautor do artigo que lhe deu origem, uma revisão sistemática rápida sobre o uso de LLMs e RAG na administração pública. Revisões rápidas seguem as etapas de uma revisão sistemática, mas simplificam algumas delas; aqui, a elegibilidade foi avaliada em uma única etapa de triagem. A revisão buscou responder como LLMs e RAG estão sendo aplicados no setor público (QP1), que tarefas administrativas apoiam (QP2) e como são avaliados e que desafios são relatados (QP3).
+Para situar o trabalho na literatura mais ampla, foi conduzida, em conjunto com o coautor do artigo que lhe deu origem, uma revisão sistemática rápida sobre LLMs e RAG na administração pública. As buscas, feitas em novembro de 2026 na Scopus, na Web of Science, na IEEE Xplore e na ACM Digital Library, retornaram 290 registros; removidas as duplicatas, os dois revisores triaram 109 de forma independente ($\kappa$ de Cohen \cite{Cohen1960} de 0,69) e incluíram 86 estudos, todos publicados a partir de 2024. \verificar{conferir no Rayyan o número de duplicatas (181 contra 119 estimadas).}
 
-As buscas foram feitas em 8 de novembro de 2026 na Scopus, na Web of Science, na IEEE Xplore e na ACM Digital Library, com uma \textit{string} que combinou termos de LLM e RAG, no título ou no resumo; termos do setor público, apenas no título, incluindo segurança dos alimentos e inspeção sanitária, para captar o domínio da PNIP; e termos ligados a documentos, normas e inspeções. Foram considerados artigos de periódico e de conferência de 2020 a 2026, em inglês ou português. As buscas retornaram 290 registros, dos quais o Rayyan removeu 181 duplicatas \verificar{uma deduplicação preliminar por DOI e título havia estimado 119 duplicatas; conferir no Rayyan}. Os dois revisores triaram os 109 registros restantes pelo título e pelo resumo, de forma independente e cega, e concordaram em 96 deles ($\kappa$ de Cohen \cite{Cohen1960} de 0,69 com as três categorias de decisão e de 0,88 entre incluir e não incluir); os conflitos foram resolvidos por consenso. Foram incluídos 86 estudos, classificados conforme a Tabela~\ref{tab:rsl}.
+O RAG aparece em pouco mais de um terço dos estudos (31 de 86), em geral para embasar as respostas em normas e documentos oficiais, e a segmentação por artigo também é usada fora do grupo, com bons resultados em normas indonésias \cite{Fiddina2026}. Predominam a análise de documentos e os assistentes ao cidadão; apenas 7 estudos apoiam pareceres ou decisões, como a avaliação de propostas em licitações \cite{Zeng2026} e de estudos de viabilidade de projetos de investimento \cite{Sheng2026}. Poucos medem o efeito sobre o trabalho dos servidores \cite{Kawashima2024}, e os estudos qualitativos indicam que os servidores esperam ajuda em subtarefas, e não a automação da decisão \cite{Drobotowicz2026}. Os sete estudos do domínio sanitário e alimentar tratam da fiscalização e da regulação, e só um usa imagens como evidência de conformidade \cite{Chernikov2025}.
 
-\begin{table}[htb]
-	\centering
-	\caption{Classificação dos 86 estudos incluídos na revisão.}
-	\label{tab:rsl}
-	\small
-	\begin{tabular}{|l|r|r|}
-		\hline
-		\textbf{Categoria} & \textbf{n} & \textbf{\%} \\
-		\hline
-		\multicolumn{3}{|l|}{\textit{Arquitetura}} \\
-		\hline
-		LLM sem recuperação externa & 38 & 44 \\
-		RAG ou variante com recuperação & 31 & 36 \\
-		Sem sistema (sobretudo estudos de adoção) & 17 & 20 \\
-		\hline
-		\multicolumn{3}{|l|}{\textit{Tarefa apoiada (um estudo pode ter mais de uma)}} \\
-		\hline
-		Análise de documentos & 38 & 44 \\
-		Serviços ao cidadão e perguntas e respostas & 29 & 34 \\
-		Conformidade regulatória & 15 & 17 \\
-		Pareceres técnicos e decisões & 7 & 8 \\
-		Domínio sanitário e alimentar & 7 & 8 \\
-		Compras públicas & 6 & 7 \\
-		\hline
-	\end{tabular}
-	\fonte{Elaborado pelo autor.}
-\end{table}
-
-O tema é recente: nenhum estudo incluído é anterior a 2024, e 48 são de 2026. Quanto às aplicações (QP1), o RAG já aparece em mais de um terço dos estudos, em geral para embasar as respostas em normas e documentos oficiais, às vezes com grafos de conhecimento \cite{Zeng2026,Papageorgiou2025} ou com vários agentes, como no DataGovAI, que apoia servidores de Utah, nos Estados Unidos, na aplicação de regras de retenção de dados \cite{Memari2026}. A soberania dos dados leva a implantações locais \cite{Ayuyang2026}, a modelos de código aberto \cite{Mala2025} e a treinamento federado \cite{JimenezGutierrez2026}, preocupação que também orientou os trabalhos do grupo. A segmentação dos textos legais é recorrente: o tamanho e a estrutura dos trechos afetam a recuperação \cite{Boonmee2026,Kawashima2024}, e em normas indonésias a divisão nos limites dos artigos atingiu 90\% de acurácia nas respostas \cite{Fiddina2026}.
-
-Quanto às tarefas (QP2), predominam a análise de documentos (44\%), como perguntas sobre normas \cite{Fiddina2026,Legado2026} e a revisão das descrições de serviços do Gov.br \cite{Ramos2025}, e os assistentes ao cidadão (34\%). Apenas 7 estudos (8\%) apoiam pareceres ou decisões, a tarefa mais próxima da deste trabalho, entre eles a avaliação de propostas em licitações \cite{Sofat2024,Zeng2026}, a avaliação de estudos de viabilidade de projetos de investimento, em que os LLMs se saíram melhor em critérios explícitos do que nos que exigem julgamento \cite{Sheng2026}, e o próprio trabalho do grupo na JAP \cite{Montero2026}.
-
-Quanto à avaliação (QP3), as práticas são heterogêneas: métricas de recuperação como Recall@$k$ e MRR \cite{Boonmee2026,Liu2025}, acurácia ou métricas do RAGAS para as respostas \cite{Fiddina2026,Memari2026} e \textit{benchmarks} que mostram baixa robustez a pequenas variações na entrada \cite{Liu2025b}. Poucos estudos medem o efeito sobre o trabalho dos servidores: em um governo local, um sistema RAG manteve a acurácia dos servidores em perguntas curtas e reduziu seu tempo de trabalho em 23,6\%, mas foi pior em perguntas descritivas \cite{Kawashima2024}. Os desafios mais citados são a privacidade, as alucinações e a confiança nas respostas, e os estudos qualitativos acrescentam que a responsabilização se dilui quando os servidores adotam as saídas por padrão \cite{Jonathan2026}, que os servidores esperam ajuda em subtarefas e não a automação da decisão \cite{Drobotowicz2026} e que as organizações públicas brasileiras ainda carecem de governança para o uso da IA generativa \cite{Alves2024,Canedo2026}. Esses resultados reforçam a escolha de manter o analista como responsável pela decisão.
-
-Os sete estudos do domínio sanitário e alimentar tratam da fiscalização e da regulação, e não da análise de solicitações: um modelo especializado em segurança dos alimentos obtido por \textit{fine-tuning} \cite{Shen2026}, a extração de informações de normas \cite{Zhao2026}, a sumarização de documentos \cite{Bakagianni2025}, o planejamento de inspeções \cite{Yu2026} e a avaliação, com LLMs visuais, da infraestrutura de vendedores de comida de rua a partir de vídeos \cite{Chernikov2025}, o único estudo incluído que usa imagens como evidência de conformidade sanitária.
-
-% ------------------------------------------------------------
-\section{Comparação e Lacuna}
-\label{sec:tr-lacuna}
-
-A Tabela~\ref{tab:rsl-comparacao} compara este trabalho com os estudos da revisão mais próximos dele; os trabalhos do grupo já foram comparados na Tabela~\ref{tab:tr-grupo}. Nenhum dos estudos incluídos gera pareceres técnicos sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis. Além dos trabalhos do grupo, que trataram de processos estaduais de sanidade animal sem evidências fotográficas, nenhum aplica RAG a pareceres no domínio sanitário. Este trabalho ocupa essa lacuna na certificação federal de embarcações pesqueiras da PNIP, medindo o efeito do contexto normativo recuperado e das fotos e tomando como referência as decisões e os pareceres dos analistas.
-
-\begin{table}[htb]
-	\centering
-	\caption{Comparação entre este trabalho e os estudos mais próximos encontrados na revisão.}
-	\label{tab:rsl-comparacao}
-	\footnotesize
-	\setlength{\tabcolsep}{3pt}
-	\begin{tabular}{|L{0.16\textwidth}|L{0.2\textwidth}|L{0.18\textwidth}|L{0.13\textwidth}|L{0.08\textwidth}|L{0.16\textwidth}|}
-		\hline
-		\textbf{Trabalho} & \textbf{Domínio} & \textbf{Tarefa} & \textbf{Recuperação} & \textbf{Imagens} & \textbf{Referência} \\
-		\hline
-		\citeonline{Fiddina2026} & Normas governamentais (Indonésia) & Perguntas e respostas & RAG por artigo & Não & Gabarito de perguntas e respostas \\
-		\hline
-		\citeonline{Memari2026} & Retenção de dados (Utah, EUA) & Conformidade & RAG multiagente & Não & Consultas sintéticas (RAGAS) \\
-		\hline
-		\citeonline{Sheng2026} & Projetos de investimento (China) \verificar{país} & Avaliar estudos de viabilidade & Não descrita & Não & Notas de especialistas \\
-		\hline
-		\citeonline{Shen2026} & Segurança dos alimentos & Várias (\textit{benchmark}) & Não (\textit{fine-tuning}) & Não & \textit{Benchmark} de 10 tarefas \\
-		\hline
-		\citeonline{Chernikov2025} & Comida de rua (Índia) & Avaliar infraestrutura & Não descrita & Sim (vídeo) & Questionário de campo \\
-		\hline
-		\textbf{Este trabalho} & Certificação HS de embarcações (PNIP) & Sugerir decisão e redigir parecer & RAG por artigo, consultas por processo & Sim (fotos) & Decisões e pareceres dos analistas \\
-		\hline
-	\end{tabular}
-	\fonte{Elaborado pelo autor.}
-\end{table}
+Nenhum dos estudos incluídos gera pareceres sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis, e, além dos trabalhos do grupo, nenhum aplica RAG a pareceres no domínio sanitário. É essa lacuna que este trabalho ocupa.
