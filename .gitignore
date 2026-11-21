@@ -1,0 +1,20 @@
+# Arquivos temporários do LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.logg
+*.lof
+*.lot
+*.loi
+*.los
+*.out
+*.toc
+*.synctex.gz
+*-autopp.*
+*-pics.pdf
+
+# Sistema
+.DS_Store
