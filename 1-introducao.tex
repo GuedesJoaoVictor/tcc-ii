@@ -30,7 +30,7 @@ Avaliar a aplicação de uma arquitetura RAG com LLMs ao apoio à análise das s
 \subsection{Objetivos específicos}
 
 \begin{enumerate}
-	% Objetivo da RSL retirado enquanto não se decide se ela entra no TCC II (texto em 3-trabalhos-relacionados.tex).
+	\item Analisar os trabalhos anteriores do grupo na PDSA-RS e situar este trabalho na literatura sobre LLMs e RAG na administração pública, por meio de uma revisão sistemática rápida.
 	\item Indexar o corpus normativo da certificação HS segmentado por artigo, preservando a origem de cada trecho para que possa ser citado.
 	\item Estender a plataforma DocFlow para recuperar as normas a partir dos documentos de cada processo e para enviar os registros fotográficos aos modelos como imagens.
 	\item Avaliar modelos de pesos abertos, executados em infraestrutura própria, e modelos hospedados em processos já decididos, com e sem o contexto normativo e as fotografias, tomando a decisão do analista como referência.
@@ -42,11 +42,11 @@ Avaliar a aplicação de uma arquitetura RAG com LLMs ao apoio à análise das s
 
 A certificação HS atesta as boas práticas higiênico-sanitárias a bordo das embarcações pesqueiras e, junto com as demais certificações da PNIP, sustenta a rastreabilidade que liga cada produto pesqueiro à sua origem \cite{Olsen2018}, um dos instrumentos de combate à pesca ilegal, não declarada e não regulamentada \cite{Agnew2009}. A demora na análise atrasa a regularização das embarcações e sobrecarrega os analistas. Um assistente que adiante a leitura do dossiê e aponte as evidências relevantes pode reduzir esse tempo, desde que suas sugestões sejam rastreáveis e a decisão permaneça com o servidor.
 
-Do ponto de vista científico, não foram encontrados na literatura consultada estudos que gerem pareceres técnicos sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis. Avaliar essa combinação em processos reais, e relatar também o que não funcionou, contribui para entender os limites do RAG em tarefas de julgamento administrativo. Por fim, a execução local dos modelos de pesos abertos permite processar documentos de terceiros sem enviá-los a serviços externos, o que importa sob a Lei Geral de Proteção de Dados Pessoais \cite{Brasil2018}.
+Do ponto de vista científico, a revisão da literatura feita neste trabalho (Capítulo~\ref{cap:trabalhos-relacionados}) não encontrou estudos que gerem pareceres técnicos sobre solicitações de certificação combinando os documentos de um dossiê, seus registros fotográficos e a recuperação das normas aplicáveis. Avaliar essa combinação em processos reais, e relatar também o que não funcionou, contribui para entender os limites do RAG em tarefas de julgamento administrativo. Por fim, a execução local dos modelos de pesos abertos permite processar documentos de terceiros sem enviá-los a serviços externos, o que importa sob a Lei Geral de Proteção de Dados Pessoais \cite{Brasil2018}.
 
 \section{Organização do trabalho}
 \label{sec:organizacao}
 
 O Capítulo~\ref{cap:referencial} apresenta os conceitos de inteligência artificial, LLMs, RAG, \textit{fine-tuning}, \textit{embeddings} e \textit{chunking}, os trabalhos anteriores do grupo na PDSA-RS e o contexto da PNIP e da certificação higiênico-sanitária.
-% Se a RSL entrar, acrescentar: "O Capítulo~\ref{cap:trabalhos-relacionados} apresenta uma revisão sistemática rápida dos trabalhos relacionados."
+O Capítulo~\ref{cap:trabalhos-relacionados} analisa os trabalhos anteriores do grupo e resume uma revisão sistemática rápida sobre LLMs e RAG na administração pública.
 O Capítulo~\ref{cap:metodologia} descreve a plataforma DocFlow e as extensões feitas para a PNIP, o Capítulo~\ref{cap:estudo-caso} relata o estudo de caso, com seu desenho, resultados e discussão, e o Capítulo~\ref{cap:consideracoes} apresenta as dificuldades encontradas, as limitações, os trabalhos futuros e a conclusão.
