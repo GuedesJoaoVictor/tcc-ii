@@ -36,7 +36,7 @@ A recuperação usa consultas derivadas do processo: uma por categoria de docume
 
 \subsection{Modelos e condições}
 
-Foram usados dois modelos de pesos abertos com entrada de imagem: o Gemma~4~26B-A4B (quantizado em nvfp4), um modelo de mistura de especialistas com cerca de 4 bilhões de parâmetros ativos por \textit{token}, e a variante \textit{instruct} do Qwen3-VL-8B (quantizado em Q4\_K\_M), ambos servidos pelo Ollama em uma estação de trabalho com 24~GB de memória unificada. Uma primeira rodada, nos 10 primeiros processos de cada classe, cruzou para os dois o contexto normativo recuperado (consulta fixa) e as fotos, e serviu para escolher o modelo aberto (Seção~\ref{sec:resultados}).
+Foram usados dois modelos de pesos abertos com entrada de imagem: o Gemma~4~26B-A4B (quantizado em nvfp4), um modelo de mistura de especialistas com cerca de 4 bilhões de parâmetros ativos por \textit{token}, e a variante \textit{instruct} do Qwen3-VL-8B (quantizado em Q4\_K\_M), ambos servidos pelo Ollama em uma estação de trabalho com 24~GB de memória unificada. Uma primeira rodada, nos 10 primeiros processos de cada classe, cruzou para os dois o contexto normativo recuperado (consulta fixa) e as fotos, e serviu para escolher o modelo aberto da avaliação principal (Seção~\ref{sec:resultados}). Como o Qwen entrou em laços de repetição com a decodificação gulosa, ele foi depois executado nos 40 processos com a amostragem recomendada pelo fornecedor do modelo (temperatura 0,7, \textit{top-p} 0,8, \textit{top-k} 20, penalidade de presença 1,5 e semente fixa), com as fotos em ordem e numeradas, nas quatro condições da primeira rodada.
 
 A avaliação principal executou o Gemma nos 40 processos junto com três modelos hospedados de referência: o GPT-6 Luna (API da OpenAI) e o Claude Haiku~5.5 (API da Anthropic), ambos com o raciocínio desligado, e o Gemini~3.5 Flash-Lite (\textit{endpoint} do Google compatível com a OpenAI), com raciocínio mínimo, já que nesse modelo ele não pode ser desligado. O Claude Haiku usou a temperatura padrão, porque sua API rejeita o parâmetro, e o Gemini a temperatura padrão recomendada pelo provedor para essa família de modelos; os demais modelos rodaram com o raciocínio desligado e os parâmetros da Tabela~\ref{tab:parametros}. Para os modelos hospedados, os dossiês e as fotos foram enviados às APIs dos provedores.
 
@@ -51,9 +51,9 @@ A avaliação principal executou o Gemma nos 40 processos junto com três modelo
 		\hline
 		\textit{Embedding} & BGE-M3, local (consulta fixa: \texttt{gemini-embedding-001}) \\
 		Top-$k$ / limiar & 2 por consulta (consulta fixa: 8) / 0 \\
-		LLMs & Gemma~4~26B-A4B; Qwen3-VL-8B (primeira rodada); \\
+		LLMs & Gemma~4~26B-A4B; Qwen3-VL-8B (quatro condições); \\
 		 & GPT-6 Luna; Gemini~3.5 Flash-Lite; Claude Haiku~5.5 \\
-		Temperatura & 0 (Gemini e Claude Haiku: padrão) \\
+		Temperatura & 0 (Gemini e Claude Haiku: padrão; Qwen: 0,7) \\
 		Saída / contexto & 16.384 / 65.536 \textit{tokens} \\
 		Fotos por tarefa & até 30 (768 pixels) \\
 		\hline
@@ -79,7 +79,7 @@ Os \textit{prompts}, o corpus normativo, os resultados agregados e um simulador 
 
 \subsection{Primeira rodada}
 
-A primeira rodada, nos 20 primeiros processos, com as fotos fora de ordem e a consulta fixa, não encontrou efeito detectável das fotos nem do RAG (McNemar com $p$ entre 0,34 e 1,0), como mostra a Tabela~\ref{tab:primeira-rodada}. O Qwen entrou em laços de repetição \cite{Holtzman2020} sem chegar à linha de recomendação em 1 a 7 processos por condição, e 414 de suas 1.257 referências a fotos apontavam para fotos que ele não havia recebido, por isso a avaliação principal seguiu com o Gemma. O Qwen não foi testado depois com as fotos numeradas (Seção~\ref{sec:dificuldades}), de modo que esse resultado reflete tanto a configuração da primeira rodada quanto o modelo.
+A primeira rodada, nos 20 primeiros processos, com as fotos fora de ordem e a consulta fixa, não encontrou efeito detectável das fotos nem do RAG (McNemar com $p$ entre 0,34 e 1,0), como mostra a Tabela~\ref{tab:primeira-rodada}. O Qwen entrou em laços de repetição \cite{Holtzman2020} sem chegar à linha de recomendação em 1 a 7 processos por condição, e 414 de suas 1.257 referências a fotos apontavam para fotos que ele não havia recebido, por isso a avaliação principal seguiu com o Gemma. Repetido depois nos 40 processos com a amostragem recomendada e as fotos numeradas (Seção~\ref{sec:desenho}), o Qwen quase sempre chegou à linha de recomendação, como se mostra na Seção~\ref{sec:resultados-principal}.
 
 \begin{table}[htb]
 	\centering
@@ -98,34 +98,37 @@ A primeira rodada, nos 20 primeiros processos, com as fotos fora de ordem e a co
 \end{table}
 
 \subsection{Avaliação principal}
+\label{sec:resultados-principal}
 
 Na avaliação principal (Tabela~\ref{tab:resultados}), nenhuma condição diferiu significativamente do acaso, nem mesmo a menor contagem (14 de 40, Gemma com todas as fotos); uma regra que indefere todo processo com alguma categoria de anexo ausente chega a 0,45. O Gemma tende a deferir (sensibilidade de 0,10 a 0,25 sem a lista de verificação). O Claude Haiku indeferiu todos os processos em todas as condições, exceto um processo com fotos e recuperação a partir do processo, e o GPT-6 Luna todos, exceto 3 com a norma inteira, ao passo que o Gemini deferiu quase todos, com sensibilidade de 0,05 a 0,15 sem a lista. Nenhuma condição diferiu significativamente dentro de um modelo nem em relação ao Gemma ($p\ge0{,}092$).
 
 \begin{table}[htb]
 	\centering
-	\caption{Acertos nos 40 processos (indeferimentos sugeridos entre parênteses), nas execuções com as fotos em ordem e numeradas. Vinte acertos é o nível do acaso, e contagens de 14 a 26 não diferem dele (teste binomial exato). Fixa e processo: recuperação com a consulta fixa e com consultas derivadas do processo; lista: evidências esperadas marcadas antes de decidir; todas as fotos: todas as fotos do processo.}
+	\caption{Acertos nos 40 processos (indeferimentos sugeridos entre parênteses), nas execuções com as fotos em ordem e numeradas. Vinte acertos é o nível do acaso, e contagens de 14 a 26 não diferem dele (teste binomial exato). Fixa e processo: recuperação com a consulta fixa e com consultas derivadas do processo; lista: evidências esperadas marcadas antes de decidir; todas as fotos: todas as fotos do processo. O Qwen, com a amostragem recomendada, foi executado apenas nas quatro condições da primeira rodada (---: não executado).}
 	\label{tab:resultados}
 	\small
-	\begin{tabular}{|l|c|c|c|c|}
+	\begin{tabular}{|l|c|c|c|c|c|}
 		\hline
-		\textbf{Condição} & \textbf{Gemma} & \textbf{GPT-6 Luna} & \textbf{Gemini} & \textbf{Claude Haiku} \\
+		\textbf{Condição} & \textbf{Gemma} & \textbf{Qwen} & \textbf{GPT-6 Luna} & \textbf{Gemini} & \textbf{Claude Haiku} \\
 		\hline
-		Texto & 20 (8) & 20 (40) & 20 (4) & 20 (40) \\
-		\quad + RAG, fixa & 21 (7) & 20 (40) & 20 (2) & 20 (40) \\
-		\quad + RAG, processo & 21 (7) & 20 (40) & 22 (2) & 20 (40) \\
-		\quad + norma inteira & 19 (5) & 19 (37) & 21 (3) & 20 (40) \\
-		\quad + lista & 18 (18) & 20 (40) & 16 (24) & 20 (40) \\
-		Fotos (30) & 15 (15) & 20 (40) & 18 (4) & 20 (40) \\
-		\quad + RAG, fixa & 18 (6) & 20 (40) & 19 (3) & 20 (40) \\
-		\quad + RAG, processo & 19 (11) & 20 (40) & 19 (3) & 21 (39) \\
-		Todas as fotos & 14 (14) & 20 (40) & 21 (5) & 20 (40) \\
-		\quad + lista & 15 (17) & 20 (40) & 20 (14) & 20 (40) \\
+		Texto & 20 (8) & 22 (18) & 20 (40) & 20 (4) & 20 (40) \\
+		\quad + RAG, fixa & 21 (7) & 22 (10) & 20 (40) & 20 (2) & 20 (40) \\
+		\quad + RAG, processo & 21 (7) & --- & 20 (40) & 22 (2) & 20 (40) \\
+		\quad + norma inteira & 19 (5) & --- & 19 (37) & 21 (3) & 20 (40) \\
+		\quad + lista & 18 (18) & --- & 20 (40) & 16 (24) & 20 (40) \\
+		Fotos (30) & 15 (15) & 18 (19) & 20 (40) & 18 (4) & 20 (40) \\
+		\quad + RAG, fixa & 18 (6) & 18 (12) & 20 (40) & 19 (3) & 20 (40) \\
+		\quad + RAG, processo & 19 (11) & --- & 20 (40) & 19 (3) & 21 (39) \\
+		Todas as fotos & 14 (14) & --- & 20 (40) & 21 (5) & 20 (40) \\
+		\quad + lista & 15 (17) & --- & 20 (40) & 20 (14) & 20 (40) \\
 		\hline
 	\end{tabular}
 	\fonte{Elaborado pelo autor.}
 \end{table}
 
 Em três execuções de duas condições (texto; fotos com recuperação a partir do processo), a decisão mudou em 5 e 3 dos 40 processos no Gemini e em 0 e 1 no Claude Haiku, com 18 a 21 acertos por execução; a Tabela~\ref{tab:resultados} traz a primeira execução. Os indeferimentos do GPT-6 Luna e do Claude Haiku se baseiam no conteúdo: nos 20 primeiros processos, o GPT-6 Luna descreveu as planilhas de controle de bordo como formulários-modelo em branco em todos os 10 deferidos, assim como em 9 dos 10 indeferidos. O Gemma não se saiu melhor com as fotos em ordem e numeradas do que sem fotos (0,375 contra 0,50, $p=0{,}18$).
+
+Com a amostragem recomendada, o Qwen concluiu as 160 tarefas e deixou sem linha de recomendação apenas 2 processos em cada condição com fotos, contra até 7 de 20 na primeira rodada. Sua acurácia foi de 0,55 sem fotos, com e sem RAG, e de 0,45 com fotos, também com e sem RAG, sem diferença significativa entre as condições ($p\ge0{,}289$) nem em relação ao Gemma nas mesmas condições ($p\ge0{,}581$). Sem RAG e sem fotos, ele foi mais equilibrado que os demais modelos (sensibilidade de 0,50 e especificidade de 0,60), mas, com os trechos recuperados, passou a deferir mais (10 indeferimentos sugeridos, contra 18), na mesma direção do Gemma. Com a consulta fixa e sem fotos, 383 de suas 384 citações à norma apontaram para trechos recuperados; com fotos, ele citou a norma em apenas 18 das 40 respostas. O Qwen também se referiu às fotos em menos respostas que o Gemma (14 contra 33 a 35 de 40) e ainda citou fotos que não havia recebido: 8 referências em uma resposta sem RAG e 60 em três com RAG. Esses resultados não dependem, portanto, de um único modelo aberto nem da decodificação gulosa da primeira rodada.
 
 \subsection{Recuperação}
 
@@ -195,10 +198,10 @@ Os rascunhos também diferem dos pareceres no estilo. O analista comenta apenas 
 
 \textbf{Viabilidade.} A plataforma processou os 40 dossiês de ponta a ponta, em mais de 1.700 execuções com cinco modelos, locais e hospedados, atrás da mesma porta. A recuperação a partir de cada processo encontrou o artigo do requisito para 71\% das categorias de documento, todas as citações à norma, exceto 15, apontaram para trechos recuperados, os modelos se referiram às fotos que receberam, e os rascunhos seguiram a estrutura do parecer técnico da PNIP. As dificuldades encontradas pelo caminho (Seção~\ref{sec:dificuldades}) levaram a mudanças na plataforma, como guardar a ordem das imagens. A acurácia das decisões, porém, ficou no nível do acaso, como se discute a seguir.
 
-\textbf{O gabarito.} Parte da discordância pode estar no próprio gabarito: as decisões finais também consideraram complementos que os modelos não viram, e, nos deferidos cujo dossiê não tinha categorias inteiras de documentos, indeferir ou pedir complementos seria uma resposta defensável. Ainda assim, nos 18 dos 40 processos decididos sem complementos, 10 deles indeferidos, os modelos acertaram de 7 a 11, contra 10 de indeferir sempre.
+\textbf{O gabarito.} Parte da discordância pode estar no próprio gabarito: as decisões finais também consideraram complementos que os modelos não viram, e, nos deferidos cujo dossiê não tinha categorias inteiras de documentos, indeferir ou pedir complementos seria uma resposta defensável. Ainda assim, nos 18 dos 40 processos decididos sem complementos, 10 deles indeferidos, os modelos acertaram de 7 a 11 (o Qwen, de 4 a 12), contra 10 de indeferir sempre.
 
 \textbf{As fotos.} As fotos também não melhoraram a decisão, embora os modelos as tenham examinado. A explicação mais plausível está no critério: os analistas verificam se as fotos cobrem as vistas exigidas. Como os rascunhos, com todas as fotos em ordem e numeradas, também julgaram os registros fotográficos conformes em todos os processos, a amostragem e a ordem das imagens dificilmente explicam o resultado. Fornecer as vistas esperadas, porém, não fez a decisão coincidir (Seção~\ref{sec:fotos}): os dossiês deferidos também estavam incompletos quando enviados, e sua complementação ocorreu na rodada de complementos, que a tarefa binária deixa de fora. O mesmo parece valer além das fotos: os rascunhos trataram a presença de um documento como cumprimento do requisito, enquanto o analista verifica se seu conteúdo o comprova. É também por isso que a regra baseada em categorias ausentes falha: 15 dos 20 indeferidos tinham todas as categorias, e 5 dos 7 deferidos que ela indefere receberam complementos depois. O que decide, portanto, não é só quais evidências são exigidas, mas quanto delas o analista aceita na primeira análise, em que a maioria dos apontamentos foi de solicitações de complementos (Seção~\ref{sec:rascunhos}). Prever essas solicitações item a item corresponderia melhor ao trabalho dos analistas do que uma decisão binária. No nível dos requisitos, porém, os modelos ainda estão longe disso: os lenientes não apontam quase nada, e os rigorosos concordam com os analistas pouco acima do acaso.
 
 \textbf{O RAG.} O RAG também não mudou a decisão, mesmo quando os trechos acompanharam o processo e incluíram o artigo do requisito para a maior parte das categorias de documento; com a norma inteira no \textit{prompt}, as decisões do Gemma sem fotos foram as mesmas que sem contexto normativo em 37 dos 40 processos. O limite, portanto, parece estar menos na recuperação do que naquilo que a norma fornece: ela enuncia requisitos, como água potável ou registros de treinamento auditáveis, mas não quanto de evidência os comprova, que é o que os analistas julgam. Esse resultado difere do obtido na PDSA-RS, em que o RAG elevou a acurácia de 12\% para 55\% \cite{Montero2025}: lá, a resposta correta decorria das normas aplicadas a dados estruturados de exames, e aqui depende de um julgamento sobre documentos e fotografias que a norma não descreve. O RAG ofereceu rastreabilidade, no sentido de que as citações apontam para trechos de fato recuperados, mas ela depende de onde fica o pedido de citação no \textit{prompt} (Seção~\ref{sec:dificuldades}).
 
-\textbf{Confiabilidade.} Na primeira rodada, com as fotos sem numeração, o Qwen deixou de responder em até 7 dos 20 processos de uma condição e citou fotos que não havia recebido, o que, em um parecer técnico, equivale a apontar evidências inexistentes; com a lista de verificação e sem fotos, o Gemini também citou fotos em 8 das 40 respostas, o Gemma em 3 e o Claude Haiku em 1. Em um assistente para analistas, essas referências precisam ser conferidas automaticamente contra o que a plataforma enviou antes de chegarem ao revisor.
+\textbf{Confiabilidade.} Na primeira rodada, com as fotos sem numeração, o Qwen deixou de responder em até 7 dos 20 processos de uma condição e citou fotos que não havia recebido, e, mesmo com as fotos numeradas e a amostragem recomendada, ainda fez 68 referências a fotos inexistentes em 4 respostas, o que, em um parecer técnico, equivale a apontar evidências inexistentes; com a lista de verificação e sem fotos, o Gemini também citou fotos em 8 das 40 respostas, o Gemma em 3 e o Claude Haiku em 1. Em um assistente para analistas, essas referências precisam ser conferidas automaticamente contra o que a plataforma enviou antes de chegarem ao revisor.
