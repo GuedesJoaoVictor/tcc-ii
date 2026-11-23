@@ -6,7 +6,7 @@
 \chapter{Referencial Teórico}
 \label{cap:referencial}
 
-Este capítulo apresenta os conceitos em que o trabalho se apoia. A Seção~\ref{sec:ia} situa a inteligência artificial e sua evolução; a Seção~\ref{sec:llm} descreve os LLMs; a Seção~\ref{sec:embedding} apresenta os \textit{embeddings}, a representação vetorial de textos em que a recuperação se apoia; e as Seções~\ref{sec:rag} a~\ref{sec:chunking} tratam da arquitetura RAG, de sua comparação com o \textit{fine-tuning} e da divisão dos documentos em trechos, o \textit{chunking}. As duas últimas seções descrevem o contexto de aplicação: a PDSA-RS, com os trabalhos anteriores do grupo, e a PNIP, com a certificação higiênico-sanitária de embarcações.
+Este capítulo apresenta os conceitos em que o trabalho se apoia. A Seção~\ref{sec:ia} situa a inteligência artificial e sua evolução; a Seção~\ref{sec:llm} descreve os LLMs; a Seção~\ref{sec:embedding} apresenta os \textit{embeddings}, a representação vetorial de textos em que a recuperação se apoia; a Seção~\ref{sec:chunking}, a divisão dos documentos em trechos, o \textit{chunking}; e a Seção~\ref{sec:rag}, a arquitetura RAG, que combina esses componentes com um LLM. As duas últimas seções descrevem o contexto de aplicação: a PDSA-RS, com os trabalhos anteriores do grupo, e a PNIP, com a certificação higiênico-sanitária de embarcações.
 
 % ------------------------------------------------------------
 \section{Inteligência Artificial}
@@ -24,7 +24,7 @@ O aprendizado de máquina mudou a abordagem: em vez de escrever as regras, o sis
 
 As redes neurais artificiais são modelos compostos por camadas de unidades que calculam somas ponderadas de suas entradas seguidas de funções de ativação não lineares. O algoritmo de retropropagação do erro \cite{Rumelhart1986} tornou viável treinar redes com camadas intermediárias, ajustando os pesos por gradiente descendente para minimizar uma função de perda. O aprendizado profundo empilha muitas dessas camadas, de modo que cada uma aprende representações progressivamente mais abstratas dos dados, sem que as características precisem ser definidas manualmente \cite{LeCun2015,Goodfellow2016}.
 
-O marco da retomada foi a vitória de uma rede convolucional profunda na competição ImageNet de 2012, com taxa de erro muito inferior à dos métodos anteriores \cite{Krizhevsky2012}. O avanço se deveu à combinação de grandes conjuntos de dados rotulados, do processamento paralelo em GPUs e de melhorias nas técnicas de treinamento. A partir daí, o aprendizado profundo alcançou desempenho comparável ao de especialistas em tarefas como a classificação de lesões de pele \cite{Esteva2017} e passou a ser usado em áreas como finanças \cite{Heaton2017}. Para dados sequenciais, como texto, as redes recorrentes e, em particular, as redes LSTM \cite{Hochreiter1997} foram por anos a arquitetura dominante, até a chegada do Transformer \cite{Vaswani2017}, base dos modelos de linguagem descritos a seguir.
+O marco da retomada foi a vitória de uma rede convolucional profunda na competição ImageNet de 2012 \cite{Krizhevsky2012}, possibilitada por grandes conjuntos de dados rotulados e pelo processamento paralelo em GPUs. Para dados sequenciais, como texto, as redes recorrentes, em particular as LSTM \cite{Hochreiter1997}, foram por anos a arquitetura dominante, até a chegada do Transformer \cite{Vaswani2017}, base dos modelos de linguagem descritos a seguir.
 
 % ------------------------------------------------------------
 \section{Large Language Models}
@@ -63,7 +63,7 @@ Os LLMs também deixaram de ser apenas textuais. Os modelos de visão e linguage
 
 \subsection{Parâmetros de geração}
 
-A cada passo, o LLM produz uma distribuição de probabilidade sobre o vocabulário, e a estratégia de decodificação define qual \textit{token} é escolhido. A decodificação gulosa escolhe sempre o mais provável; a busca em feixe mantém várias sequências candidatas; e a amostragem sorteia o próximo \textit{token} da distribuição. A temperatura reescala essa distribuição antes do sorteio: valores baixos a concentram nos \textit{tokens} mais prováveis e tornam a saída mais determinística, e valores altos a achatam e aumentam a diversidade. A amostragem por núcleo restringe o sorteio ao menor conjunto de \textit{tokens} cuja probabilidade acumulada atinge um limiar, evitando tanto a repetição em laço, comum na decodificação gulosa, quanto palavras improváveis \cite{Holtzman2020}. Em tarefas administrativas, em que se espera consistência, costuma-se usar temperaturas baixas \cite{Montero2026}.
+A cada passo, o LLM produz uma distribuição de probabilidade sobre o vocabulário, e a estratégia de decodificação define qual \textit{token} é escolhido. A decodificação gulosa escolhe sempre o mais provável, e a amostragem sorteia o próximo \textit{token} da distribuição. A temperatura reescala essa distribuição antes do sorteio: valores baixos a concentram nos \textit{tokens} mais prováveis e tornam a saída mais determinística, e valores altos a achatam e aumentam a diversidade. A amostragem por núcleo restringe o sorteio ao menor conjunto de \textit{tokens} cuja probabilidade acumulada atinge um limiar, evitando tanto a repetição em laço, comum na decodificação gulosa, quanto palavras improváveis \cite{Holtzman2020}. Em tarefas administrativas, em que se espera consistência, costuma-se usar temperaturas baixas \cite{Montero2026}.
 
 Outro parâmetro é a janela de contexto, o número máximo de \textit{tokens} que o modelo considera de uma vez, somando a entrada e a saída. Janelas maiores permitem incluir documentos inteiros no \textit{prompt}, mas não garantem que o modelo use bem todo o conteúdo: o desempenho tende a cair quando a informação relevante está no meio de um contexto longo, e não em seu início ou fim \cite{Liu2024}.
 
@@ -71,7 +71,7 @@ Outro parâmetro é a janela de contexto, o número máximo de \textit{tokens} q
 
 Apesar da capacidade de generalização, os LLMs têm limitações que pesam em domínios regulados. A primeira é o corte de conhecimento: o modelo só conhece o que estava em seus dados de treinamento, de modo que normas publicadas ou alteradas depois disso lhe são desconhecidas. A segunda é a cobertura: normas locais e técnicas, como portarias de um ministério brasileiro, são raras nos corpora de pré-treinamento, e o desempenho dos modelos cai em domínios distantes desses dados \cite{Gururangan2020}. A terceira é a alucinação, a produção de conteúdo fluente e plausível, mas sem apoio nos dados ou contrário a eles \cite{Ji2023}. Em um parecer técnico, isso equivale a citar um requisito inexistente ou uma evidência que o processo não contém. Por fim, as respostas não indicam sua origem, o que dificulta verificá-las.
 
-Duas estratégias tratam dessas limitações: especializar o próprio modelo, por \textit{fine-tuning}, ou fornecer o conhecimento no momento da consulta, por recuperação. Antes de tratar delas, a próxima seção apresenta os \textit{embeddings}, a representação de textos em que a recuperação se apoia; a Seção~\ref{sec:rag} trata da recuperação, e a Seção~\ref{sec:rag-ft} a compara com o \textit{fine-tuning}.
+Duas estratégias tratam dessas limitações: especializar o próprio modelo, por \textit{fine-tuning}, isto é, continuando seu treinamento em dados do domínio \cite{Gururangan2020}, ou fornecer o conhecimento no momento da consulta, por recuperação. Para incorporar conhecimento factual, a recuperação superou o \textit{fine-tuning} não supervisionado \cite{Ovadia2024}, e é a estratégia seguida neste trabalho, como nos trabalhos anteriores do grupo \cite{Montero2025,Montero2026}: a norma da certificação HS mudou duas vezes desde 2020, os pareceres precisam indicar o requisito em que se baseiam, e não há pareceres rotulados em número suficiente para treinar um modelo. Antes de tratar da recuperação, a próxima seção apresenta os \textit{embeddings}, a representação de textos em que ela se apoia.
 
 % ------------------------------------------------------------
 \section{Embeddings}
@@ -87,7 +87,7 @@ As representações densas resolvem esse descompasso de vocabulário. O word2vec
 
 \subsection{Embeddings de sentenças e de trechos}
 
-Para recuperar trechos, é preciso representar um texto inteiro em um único vetor. O Sentence-BERT ajusta o BERT em uma arquitetura siamesa, em que dois textos passam pelo mesmo codificador e o treinamento aproxima os vetores de pares semanticamente equivalentes, o que permite comparar textos pela similaridade de cosseno de seus vetores \cite{Reimers2019}. O \textit{Dense Passage Retrieval} (DPR) usa dois codificadores BERT, um para as perguntas e outro para os trechos, treinados para que cada pergunta fique próxima dos trechos que a respondem; em perguntas de domínio aberto, superou o BM25 em 9 a 19 pontos percentuais de acurácia na recuperação dos 20 primeiros trechos \cite{Karpukhin2020}. É esse recuperador que compõe o RAG original, descrito na próxima seção \cite{Lewis2020}.
+Para recuperar trechos, é preciso representar um texto inteiro em um único vetor. O Sentence-BERT ajusta o BERT em uma arquitetura siamesa, em que dois textos passam pelo mesmo codificador e o treinamento aproxima os vetores de pares semanticamente equivalentes, o que permite comparar textos pela similaridade de cosseno de seus vetores \cite{Reimers2019}. O \textit{Dense Passage Retrieval} (DPR) usa dois codificadores BERT, um para as perguntas e outro para os trechos, treinados para que cada pergunta fique próxima dos trechos que a respondem; em perguntas de domínio aberto, superou o BM25 em 9 a 19 pontos percentuais de acurácia na recuperação dos 20 primeiros trechos \cite{Karpukhin2020}. É esse recuperador que compõe o RAG original, descrito na Seção~\ref{sec:rag} \cite{Lewis2020}.
 
 Como os vetores dos documentos são calculados uma vez, na indexação, e a consulta é codificada separadamente, esses modelos são chamados de bicodificadores. A alternativa, os codificadores cruzados, processa a consulta e o trecho juntos e estima melhor a relevância, mas precisa ser executada para cada par, o que só é viável para reordenar um pequeno conjunto já recuperado; é esse o papel do reranqueamento nos sistemas RAG avançados (Seção~\ref{sec:rag}) \cite{Gao2023}.
 
@@ -103,6 +103,31 @@ A proximidade entre dois vetores é medida, em geral, pela similaridade de cosse
 \end{equation}
 
 Encontrar os $k$ vetores mais similares comparando a consulta com todos os vetores armazenados tem custo proporcional ao tamanho da coleção. Os bancos vetoriais usam, por isso, índices de busca aproximada de vizinhos mais próximos, que trocam uma pequena perda de exatidão por buscas muito mais rápidas. O HNSW, um dos mais usados, organiza os vetores em um grafo de várias camadas, em que as superiores têm poucas conexões longas e as inferiores muitas conexões curtas; a busca começa no topo e desce refinando a vizinhança \cite{Malkov2020}. O pgvector acrescenta ao PostgreSQL um tipo de dado vetorial, operadores de distância e índices HNSW, de modo que os vetores fiquem no mesmo banco relacional que os metadados e possam ser filtrados por eles na mesma consulta \cite{pgvector}. Essa combinação foi usada na PDSA-RS \cite{Montero2025} e é a usada pelo DocFlow.
+
+% ------------------------------------------------------------
+\section{Chunking}
+\label{sec:chunking}
+
+\textit{Chunking} é a divisão dos documentos em trechos menores antes da indexação. Ele é necessário porque os modelos de \textit{embedding} têm limite de entrada, porque o vetor de um texto longo mistura muitos assuntos e representa mal cada um deles, e porque a janela de contexto do LLM e o custo da inferência limitam quanto texto pode ser inserido no \textit{prompt}. A forma de dividir determina a unidade que será recuperada e citada e, por isso, afeta diretamente a qualidade da recuperação nos sistemas RAG (Seção~\ref{sec:rag}) \cite{Gao2023}.
+
+O tamanho dos trechos envolve uma troca. Trechos pequenos geram vetores mais focados e uma recuperação mais precisa, mas podem perder o contexto necessário para interpretá-los, como a condição enunciada no parágrafo anterior. Trechos grandes preservam o contexto, mas diluem o vetor e levam ao \textit{prompt} conteúdo irrelevante. A sobreposição, em que cada trecho repete o final do anterior, reduz o risco de que uma informação fique partida entre dois trechos, à custa de redundância no índice.
+
+\subsection{Estratégias}
+
+As estratégias mais comuns são:
+
+\begin{itemize}
+	\item \textbf{Tamanho fixo}: o texto é cortado a cada $n$ caracteres ou \textit{tokens}, com ou sem sobreposição. É simples e previsível, mas ignora a estrutura do texto e pode cortar frases e artigos ao meio. Na PDSA-RS, por exemplo, foram usados trechos de 1.024 caracteres com sobreposição de 200 \cite{Montero2025}.
+	\item \textbf{Recursiva}: o texto é dividido pelo separador de maior nível, como a quebra de parágrafo, e os trechos que continuam acima do limite são divididos de novo pelo separador seguinte, como a quebra de linha, a frase e a palavra. Assim os cortes tendem a cair nos limites naturais do texto, respeitando um tamanho máximo. É a estratégia padrão de bibliotecas como LangChain e LlamaIndex e do DocFlow.
+	\item \textbf{Semântica}: o texto é dividido onde a similaridade entre os \textit{embeddings} de frases consecutivas cai, o que indica mudança de assunto.
+	\item \textbf{Estrutural}: o texto é dividido segundo a estrutura do próprio documento, como seções, títulos, tabelas ou, em textos legais, artigos.
+\end{itemize}
+
+\subsection{Chunking de textos normativos}
+
+Os textos normativos têm uma estrutura explícita que favorece a divisão estrutural. Na legislação brasileira, a Lei Complementar nº~95/1998 estabelece que a unidade básica de articulação dos textos legais é o artigo, desdobrado em parágrafos, incisos, alíneas e itens \cite{Brasil1998}. Cada artigo tende, portanto, a tratar de um único assunto e é a unidade pela qual as normas são citadas. Um trecho que corresponde a um artigo pode ser recuperado e citado como ``Art.~8 da Portaria 310/2020'', ao passo que uma janela de tamanho fixo pode começar no meio de um artigo e terminar no seguinte, perdendo a referência de sua origem.
+
+A literatura confirma que essa escolha importa. Em documentos governamentais tailandeses, \citeonline{Boonmee2026} compararam a divisão recursiva de tamanho fixo, em três tamanhos, com a divisão semântica usando o BGE-M3, e mostraram que o melhor método depende da estrutura de cada tipo de documento. Em normas indonésias, um \textit{framework} que respeita os limites dos artigos (\textit{pasal}) e expande a consulta atingiu 90\% de acurácia nas respostas \cite{Fiddina2026}, e a arquitetura de \citeonline{Montero2026} também segmenta a legislação por artigo. Neste trabalho, o corpus normativo foi segmentado por artigo, com a divisão recursiva apenas como alternativa para artigos longos e textos sem artigos, e cada trecho foi armazenado com o arquivo e o artigo de origem como metadados (Capítulo~\ref{cap:metodologia}).
 
 % ------------------------------------------------------------
 \section{Retrieval-Augmented Generation}
@@ -164,83 +189,13 @@ Outra decisão de projeto é a origem da consulta. Em assistentes de perguntas e
 
 O RAG transfere parte do problema para a recuperação. Se os trechos relevantes não forem recuperados, o modelo responde sem eles ou com trechos irrelevantes, que podem desviá-lo. Na PDSA-RS, a maior parte das falhas do sistema RAG veio de erros de recuperação \cite{Montero2025}. Mesmo quando os trechos certos são recuperados, nada garante que o modelo os use corretamente: o contexto pode ser longo, com a informação relevante no meio \cite{Liu2024}, ou a norma pode não conter o critério de que a decisão depende.
 
-Por isso, a avaliação de sistemas RAG costuma separar os dois componentes. A recuperação é avaliada com métricas da área de recuperação de informação, como a revocação nos $k$ primeiros resultados (Recall@$k$), a média do inverso da posição do primeiro resultado relevante (MRR) e o ganho cumulativo descontado normalizado (NDCG) \cite{Manning2008}. A geração é avaliada pela correção da resposta em relação a um gabarito ou por critérios como a fidelidade da resposta ao contexto recuperado e sua relevância para a pergunta, que podem ser estimados automaticamente com o auxílio de um LLM, como no \textit{framework} RAGAS \cite{Es2024}. Em tarefas de decisão, como a deste trabalho, a referência mais direta é a decisão tomada pelos especialistas humanos no mesmo processo.
-
-% ------------------------------------------------------------
-\section{RAG \textit{versus} Fine-Tuning}
-\label{sec:rag-ft}
-
-O \textit{fine-tuning} continua o treinamento de um modelo pré-treinado em dados de um domínio ou de uma tarefa, ajustando seus pesos. A variante mais simples ajusta todos os parâmetros, o que, em LLMs com bilhões de parâmetros, exige muita memória de GPU e gera uma cópia completa do modelo para cada adaptação. Os métodos de ajuste eficiente em parâmetros reduzem esse custo. O LoRA congela os pesos originais e treina apenas pares de matrizes de baixo posto acrescentadas a algumas camadas, reduzindo em ordens de grandeza o número de parâmetros treináveis \cite{Hu2022}, e o QLoRA aplica o LoRA sobre um modelo quantizado em 4 bits, o que permite ajustar modelos grandes em uma única GPU \cite{Dettmers2023}. Também é possível continuar o pré-treinamento em textos do domínio antes do ajuste para a tarefa, o que melhora o desempenho em domínios especializados \cite{Gururangan2020}. Modelos como o BloombergGPT, para finanças \cite{Wu2023}, e o GatorTron, para registros clínicos \cite{Yang2022}, foram treinados com grandes volumes de dados do próprio domínio.
-
-As duas abordagens diferem no lugar em que o conhecimento fica. No \textit{fine-tuning}, ele é incorporado aos pesos e, portanto, é estático: cada mudança na norma exige um novo ciclo de curadoria de dados e treinamento. No RAG, o conhecimento fica em uma base externa, consultada a cada requisição, e pode ser atualizado a qualquer momento. \citeonline{Ovadia2024} compararam as duas formas de injetar conhecimento factual em LLMs e verificaram que o RAG superou consistentemente o \textit{fine-tuning} não supervisionado, tanto para conhecimentos já vistos no treinamento quanto para conhecimentos novos, e que os modelos têm dificuldade em aprender fatos novos apenas por \textit{fine-tuning}. A Tabela~\ref{tab:rag-ft} resume as diferenças.
-
-\begin{table}[htb]
-	\centering
-	\caption{Comparação entre RAG e \textit{fine-tuning}.}
-	\label{tab:rag-ft}
-	\small
-	\begin{tabular}{|L{0.22\textwidth}|L{0.34\textwidth}|L{0.34\textwidth}|}
-		\hline
-		\textbf{Critério} & \textbf{RAG} & \textbf{\textit{Fine-tuning}} \\
-		\hline
-		Onde fica o conhecimento & Em uma base externa, consultada a cada requisição & Nos pesos do modelo \\
-		\hline
-		Atualização & Reindexação dos documentos, sem treinamento & Novo ciclo de curadoria de dados e treinamento \\
-		\hline
-		Dados necessários & Os próprios documentos do domínio & Exemplos de treinamento, em geral rotulados \\
-		\hline
-		Custo computacional & Concentrado na inferência (recuperação e contexto maior) & Concentrado no treinamento, com GPUs \\
-		\hline
-		Rastreabilidade & Cada trecho tem origem conhecida e pode ser citado & A origem da resposta não é identificável \\
-		\hline
-		Alucinação & Reduzida quando a recuperação encontra os trechos certos & Persiste para fatos ausentes ou raros nos dados \\
-		\hline
-		Melhor uso & Conhecimento factual e que muda com o tempo & Estilo, formato de saída e comportamento na tarefa \\
-		\hline
-	\end{tabular}
-	\fonte{Elaborado pelo autor, com base em \citeonline{Lewis2020}, \citeonline{Gao2023} e \citeonline{Ovadia2024}.}
-\end{table}
-
-As abordagens não são excludentes. O \textit{fine-tuning} é mais indicado para ensinar ao modelo um formato de saída, um vocabulário ou um comportamento, como redigir no padrão de um parecer, e o RAG para fornecer o conhecimento factual em que a resposta deve se apoiar; é possível ajustar um modelo e usá-lo dentro de um sistema RAG. Neste trabalho, a escolha pelo RAG segue o caminho dos trabalhos anteriores do grupo \cite{Montero2025,Montero2026} e se justifica por três características do domínio: a norma da certificação HS mudou duas vezes desde 2020, os pareceres precisam indicar o requisito em que se baseiam, e não há um conjunto de pareceres rotulados grande o bastante para treinar um modelo.
-
-% ------------------------------------------------------------
-\section{Chunking}
-\label{sec:chunking}
-
-\textit{Chunking} é a divisão dos documentos em trechos menores antes da indexação. Ele é necessário porque os modelos de \textit{embedding} têm limite de entrada, porque o vetor de um texto longo mistura muitos assuntos e representa mal cada um deles, e porque a janela de contexto do LLM e o custo da inferência limitam quanto texto pode ser inserido no \textit{prompt}. A forma de dividir determina a unidade que será recuperada e citada e, por isso, afeta diretamente a qualidade do RAG \cite{Gao2023}.
-
-O tamanho dos trechos envolve uma troca. Trechos pequenos geram vetores mais focados e uma recuperação mais precisa, mas podem perder o contexto necessário para interpretá-los, como a condição enunciada no parágrafo anterior. Trechos grandes preservam o contexto, mas diluem o vetor e levam ao \textit{prompt} conteúdo irrelevante. A sobreposição, em que cada trecho repete o final do anterior, reduz o risco de que uma informação fique partida entre dois trechos, à custa de redundância no índice.
-
-\subsection{Estratégias}
-
-As estratégias mais comuns são:
-
-\begin{itemize}
-	\item \textbf{Tamanho fixo}: o texto é cortado a cada $n$ caracteres ou \textit{tokens}, com ou sem sobreposição. É simples e previsível, mas ignora a estrutura do texto e pode cortar frases e artigos ao meio. Na PDSA-RS, por exemplo, foram usados trechos de 1.024 caracteres com sobreposição de 200 \cite{Montero2025}.
-	\item \textbf{Recursiva}: o texto é dividido pelo separador de maior nível, como a quebra de parágrafo, e os trechos que continuam acima do limite são divididos de novo pelo separador seguinte, como a quebra de linha, a frase e a palavra. Assim os cortes tendem a cair nos limites naturais do texto, respeitando um tamanho máximo. É a estratégia padrão de bibliotecas como LangChain e LlamaIndex e do DocFlow.
-	\item \textbf{Semântica}: o texto é dividido onde a similaridade entre os \textit{embeddings} de frases consecutivas cai, o que indica mudança de assunto.
-	\item \textbf{Estrutural}: o texto é dividido segundo a estrutura do próprio documento, como seções, títulos, tabelas ou, em textos legais, artigos.
-\end{itemize}
-
-\subsection{Chunking de textos normativos}
-
-Os textos normativos têm uma estrutura explícita que favorece a divisão estrutural. Na legislação brasileira, a Lei Complementar nº~95/1998 estabelece que a unidade básica de articulação dos textos legais é o artigo, desdobrado em parágrafos, incisos, alíneas e itens \cite{Brasil1998}. Cada artigo tende, portanto, a tratar de um único assunto e é a unidade pela qual as normas são citadas. Um trecho que corresponde a um artigo pode ser recuperado e citado como ``Art.~8 da Portaria 310/2020'', ao passo que uma janela de tamanho fixo pode começar no meio de um artigo e terminar no seguinte, perdendo a referência de sua origem.
-
-A literatura confirma que essa escolha importa. Em documentos governamentais tailandeses, \citeonline{Boonmee2026} compararam a divisão recursiva de tamanho fixo, em três tamanhos, com a divisão semântica usando o BGE-M3, e mostraram que o melhor método depende da estrutura de cada tipo de documento. \citeonline{Kawashima2024} também compararam métodos de segmentação em um sistema RAG para um governo local. Em normas indonésias, um \textit{framework} que respeita os limites dos artigos (\textit{pasal}) e expande a consulta atingiu 90\% de acurácia nas respostas \cite{Fiddina2026}, e a arquitetura de \citeonline{Montero2026} também segmenta a legislação por artigo. Neste trabalho, o corpus normativo foi segmentado por artigo, com a divisão recursiva apenas como alternativa para artigos longos e textos sem artigos, e cada trecho foi armazenado com o arquivo e o artigo de origem como metadados (Capítulo~\ref{cap:metodologia}).
+Por isso, a avaliação de sistemas RAG costuma separar os dois componentes. A recuperação é avaliada com métricas da área de recuperação de informação, como a revocação nos $k$ primeiros resultados (Recall@$k$), que mede se os trechos relevantes estão entre os recuperados \cite{Manning2008}. A geração é avaliada pela correção da resposta em relação a um gabarito ou por critérios como a fidelidade da resposta ao contexto recuperado e sua relevância para a pergunta, que podem ser estimados automaticamente com o auxílio de um LLM, como no \textit{framework} RAGAS \cite{Es2024}. Em tarefas de decisão, como a deste trabalho, a referência mais direta é a decisão tomada pelos especialistas humanos no mesmo processo.
 
 % ------------------------------------------------------------
 \section{PDSA-RS e Trabalhos Anteriores}
 \label{sec:pdsa}
 
-Este trabalho dá continuidade a uma linha de pesquisa do LUMAC sobre o uso de LLMs e RAG em plataformas governamentais de defesa sanitária. Esta seção descreve a plataforma em que ela começou e os resultados obtidos.
-
-\subsection{A Plataforma de Defesa Sanitária Animal do Rio Grande do Sul}
-
-A Plataforma de Defesa Sanitária Animal do Rio Grande do Sul (PDSA-RS), criada em 2019, apoia a sanidade e a produção animal no estado por meio de uma plataforma digital para a gestão de certificações e o acompanhamento da conformidade sanitária \cite{Montero2025}. Foi desenvolvida pela UFSM em parceria com o Ministério da Agricultura e Pecuária (MAPA), com apoio do Fundo de Desenvolvimento e Defesa Sanitária Animal (FUNDESA), e integra as etapas da certificação de estabelecimentos avícolas e suínos, ligando inspeções veterinárias, laboratórios e autoridades de defesa agropecuária. Produtores e fiscais acompanham pela plataforma os exames sanitários, o processamento das amostras e a emissão dos certificados exigidos para a movimentação de animais no país e no exterior \cite{Montero2025}.
-
-A plataforma adota uma arquitetura orientada a microsserviços. O \textit{front-end} é formado por portais especializados para cada público, como o Serviço Veterinário Estadual, os responsáveis técnicos, os laboratórios e o MAPA; no \textit{back-end}, APIs de negócio implementam os fluxos regulatórios, e APIs de serviço oferecem funcionalidades reutilizáveis às demais \cite{Montero2025}. Sobre essa base, o grupo já estudou, por exemplo, uma arquitetura de \textit{blockchain} para o controle sanitário animal \cite{Descovi2021} e o desempenho de simulações de propagação de doenças animais em R e Python \cite{Schneider2024}.
-
-\subsection{Trabalhos anteriores do grupo}
+Este trabalho dá continuidade a uma linha de pesquisa do LUMAC sobre o uso de LLMs e RAG em plataformas governamentais de defesa sanitária, iniciada na Plataforma de Defesa Sanitária Animal do Rio Grande do Sul (PDSA-RS). Criada em 2019, a PDSA-RS apoia a sanidade e a produção animal no estado por meio de uma plataforma digital para a gestão de certificações e o acompanhamento da conformidade sanitária \cite{Montero2025}. Foi desenvolvida pela UFSM em parceria com o Ministério da Agricultura e Pecuária (MAPA), com apoio do Fundo de Desenvolvimento e Defesa Sanitária Animal (FUNDESA), e integra as etapas da certificação de estabelecimentos avícolas e suínos, ligando inspeções veterinárias, laboratórios e autoridades de defesa agropecuária. Produtores e fiscais acompanham pela plataforma os exames sanitários, o processamento das amostras e a emissão dos certificados exigidos para a movimentação de animais no país e no exterior \cite{Montero2025}. A plataforma adota uma arquitetura orientada a microsserviços, com portais para cada público, como o Serviço Veterinário Estadual, os responsáveis técnicos, os laboratórios e o MAPA \cite{Montero2025}.
 
 Sobre essa plataforma, o grupo aplicou RAG pela primeira vez no módulo de certificação avícola: as instruções normativas que definem os exames exigidos foram indexadas, e um LLM pequeno, executado localmente, passou a responder sobre a condição sanitária das solicitações, com acurácia de 55\% contra 12\% do mesmo modelo sem recuperação \cite{Montero2025iceis,Montero2025}. Em seguida, \citeonline{Montero2026} propuseram uma arquitetura genérica de assistente para analistas do setor público e avaliaram seu motor de geração em pareceres sobre recursos administrativos julgados pela JAP da SEAPI-RS. Essa arquitetura foi depois implementada como a plataforma DocFlow, descrita no Capítulo~\ref{cap:metodologia}. Esses trabalhos são analisados em detalhe na Seção~\ref{sec:tr-grupo}.
 

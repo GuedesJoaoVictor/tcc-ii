@@ -110,12 +110,4 @@ Também foram necessárias mudanças nos adaptadores dos provedores. O adaptador
 
 Todo resultado é criado com o estado \textit{pendente de revisão}. O revisor pode aprová-lo, rejeitá-lo (informando o motivo), editá-lo ou pedir que seja gerado de novo. O conteúdo gerado originalmente é imutável: as edições alteram apenas o conteúdo corrente, e cada transição acrescenta um registro de revisão. A aprovação é um estado terminal. Como o contrato está na API, nenhum sistema integrado pode pular a revisão por engano. Na PNIP, isso mantém a decisão com o analista, que é quem responde por ela.
 
-A Figura~\ref{fig:analise-assistida} mostra esse contrato na integração com a PNIP em desenvolvimento, que não fez parte da configuração avaliada no Capítulo~\ref{cap:estudo-caso}. Nela, uma análise assistida verifica 90 regras (25 requisitos da PNIP e 65 itens do programa de autocontrole), o analista aceita ou descarta cada alerta, os itens pendentes bloqueiam o parecer final, e o painel informa que a análise não aprova nem reprova a embarcação.
-
-\begin{figure}[htb]
-	\centering
-	\caption{Painel da análise assistida HS na PNIP: regras com resultado conclusivo, alertas por severidade, alertas revisados pelo analista e pendências que bloqueiam o parecer final.}
-	\label{fig:analise-assistida}
-	\includegraphics[width=\textwidth]{figuras/analise-assistida-painel.png}
-	\fonte{Ambiente de homologação da PNIP, com dados identificadores ocultados.}
-\end{figure}
+Esse contrato já aparece na integração com a PNIP em desenvolvimento, que não fez parte da configuração avaliada no Capítulo~\ref{cap:estudo-caso}: uma análise assistida verifica 90 regras (25 requisitos da PNIP e 65 itens do programa de autocontrole), o analista aceita ou descarta cada alerta, os itens pendentes bloqueiam o parecer final, e a interface informa que a análise não aprova nem reprova a embarcação.
