@@ -22,9 +22,9 @@ Para a comparação com a PNIP, importa que ali a decisão decorre da aplicaçã
 
 \subsection{Pareceres em recursos administrativos}
 
-Em seguida, \citeonline{Montero2026} propuseram uma arquitetura de assistente para analistas do setor público, integrada ao sistema legado do órgão e composta por um \textit{pipeline} que converte documentos, imagens e áudios em texto, um núcleo RAG com a legislação segmentada por artigo, uma camada de anonimização alinhada à LGPD e uma etapa de revisão humana. A arquitetura era conceitual, e apenas o motor de geração foi avaliado: em 14 recursos administrativos da JAP/SEAPI-RS \verificar{o nome oficial da JAP}, o Gemini 2.5 Pro recebeu os documentos transcritos manualmente e as normas inteiras no \textit{prompt}, simulando uma recuperação ideal. As decisões foram as mesmas em três temperaturas, com 71,4\% de acurácia e $\kappa$ de Cohen de 0,317, abaixo dos 78,6\% de uma regra que mantém todos os autos, mas identificando dois dos três recursos providos. A análise qualitativa mostrou que o modelo podia ser convencido por argumentos incorretos da defesa, como a citação de uma lei já revogada. Os autores apontam como limitações a amostra pequena, a recuperação simulada, o uso de um único modelo e a falta de linhas de base \cite{Montero2026}.
+Em seguida, \citeonline{Montero2026} propuseram uma arquitetura de assistente para analistas do setor público, integrada ao sistema legado do órgão e composta por um \textit{pipeline} que converte documentos, imagens e áudios em texto, um núcleo RAG com a legislação segmentada por artigo, uma camada de anonimização alinhada à LGPD e uma etapa de revisão humana. A arquitetura era conceitual, e apenas o motor de geração foi avaliado: em 14 recursos administrativos julgados pela JAP da SEAPI-RS, o Gemini 2.5 Pro recebeu os documentos transcritos manualmente e as normas inteiras no \textit{prompt}, simulando uma recuperação ideal. As decisões foram as mesmas em três temperaturas, com 71,4\% de acurácia e $\kappa$ de Cohen de 0,317, abaixo dos 78,6\% de uma regra que mantém todos os autos, mas identificando dois dos três recursos providos. A análise qualitativa mostrou que o modelo podia ser convencido por argumentos incorretos da defesa, como a citação de uma lei já revogada. Os autores apontam como limitações a amostra pequena, a recuperação simulada, o uso de um único modelo e a falta de linhas de base \cite{Montero2026}.
 
-\subsection{Deste trabalho em relação aos anteriores}
+\subsection{Este trabalho em relação aos anteriores}
 
 A arquitetura de \citeonline{Montero2026} foi implementada pelo seu primeiro autor como a plataforma DocFlow (Capítulo~\ref{cap:metodologia}). Este trabalho a aplica à PNIP e trata das limitações apontadas acima: a recuperação é implementada e medida, a avaliação usa 40 processos, vários modelos e linhas de base explícitas, e os dossiês reais, com documentos digitalizados e fotografias, são processados de ponta a ponta. A Tabela~\ref{tab:tr-grupo} resume as diferenças.
 
@@ -38,7 +38,7 @@ A arquitetura de \citeonline{Montero2026} foi implementada pelo seu primeiro aut
 		\hline
 		& \textbf{\citeonline{Montero2025}} & \textbf{\citeonline{Montero2026}} & \textbf{Este trabalho} \\
 		\hline
-		Processo & Certificação avícola (PDSA-RS) & Recursos de infrações (SEAPI-RS) & Certificação HS de embarcações (PNIP) \\
+		Processo & Certificação avícola (PDSA-RS) & Recursos administrativos (JAP/SEAPI-RS) & Certificação HS de embarcações (PNIP) \\
 		\hline
 		Evidência & Dados estruturados de exames & Documentos transcritos manualmente & Documentos digitalizados e fotografias \\
 		\hline

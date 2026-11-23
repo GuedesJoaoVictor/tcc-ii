@@ -6,7 +6,7 @@
 \chapter{Referencial Teórico}
 \label{cap:referencial}
 
-Este capítulo apresenta os conceitos em que o trabalho se apoia. A Seção~\ref{sec:ia} situa a inteligência artificial e sua evolução; a Seção~\ref{sec:llm} descreve os LLMs; as Seções~\ref{sec:rag} a~\ref{sec:chunking} tratam da arquitetura RAG, de sua comparação com o \textit{fine-tuning} e de dois de seus componentes, os \textit{embeddings} e o \textit{chunking}. As duas últimas seções descrevem o contexto de aplicação: a PDSA-RS, com os trabalhos anteriores do grupo, e a PNIP, com a certificação higiênico-sanitária de embarcações.
+Este capítulo apresenta os conceitos em que o trabalho se apoia. A Seção~\ref{sec:ia} situa a inteligência artificial e sua evolução; a Seção~\ref{sec:llm} descreve os LLMs; a Seção~\ref{sec:embedding} apresenta os \textit{embeddings}, a representação vetorial de textos em que a recuperação se apoia; e as Seções~\ref{sec:rag} a~\ref{sec:chunking} tratam da arquitetura RAG, de sua comparação com o \textit{fine-tuning} e da divisão dos documentos em trechos, o \textit{chunking}. As duas últimas seções descrevem o contexto de aplicação: a PDSA-RS, com os trabalhos anteriores do grupo, e a PNIP, com a certificação higiênico-sanitária de embarcações.
 
 % ------------------------------------------------------------
 \section{Inteligência Artificial}
@@ -71,13 +71,44 @@ Outro parâmetro é a janela de contexto, o número máximo de \textit{tokens} q
 
 Apesar da capacidade de generalização, os LLMs têm limitações que pesam em domínios regulados. A primeira é o corte de conhecimento: o modelo só conhece o que estava em seus dados de treinamento, de modo que normas publicadas ou alteradas depois disso lhe são desconhecidas. A segunda é a cobertura: normas locais e técnicas, como portarias de um ministério brasileiro, são raras nos corpora de pré-treinamento, e o desempenho dos modelos cai em domínios distantes desses dados \cite{Gururangan2020}. A terceira é a alucinação, a produção de conteúdo fluente e plausível, mas sem apoio nos dados ou contrário a eles \cite{Ji2023}. Em um parecer técnico, isso equivale a citar um requisito inexistente ou uma evidência que o processo não contém. Por fim, as respostas não indicam sua origem, o que dificulta verificá-las.
 
-Duas estratégias tratam dessas limitações: especializar o próprio modelo, por \textit{fine-tuning}, ou fornecer o conhecimento no momento da consulta, por recuperação. As próximas seções tratam de cada uma e as comparam.
+Duas estratégias tratam dessas limitações: especializar o próprio modelo, por \textit{fine-tuning}, ou fornecer o conhecimento no momento da consulta, por recuperação. Antes de tratar delas, a próxima seção apresenta os \textit{embeddings}, a representação de textos em que a recuperação se apoia; a Seção~\ref{sec:rag} trata da recuperação, e a Seção~\ref{sec:rag-ft} a compara com o \textit{fine-tuning}.
+
+% ------------------------------------------------------------
+\section{Embeddings}
+\label{sec:embedding}
+
+Um \textit{embedding} é uma representação de um texto (uma palavra, uma frase ou um trecho inteiro) como um vetor de números reais de dimensão fixa, construída de modo que textos com significados próximos fiquem próximos no espaço vetorial. É essa propriedade que permite encontrar trechos relevantes para uma consulta mesmo quando eles não compartilham palavras com ela, e é sobre ela que se constrói a recuperação dos sistemas RAG (Seção~\ref{sec:rag}).
+
+\subsection{Representações esparsas e densas}
+
+As representações clássicas da recuperação de informação são esparsas: cada documento é um vetor com uma dimensão por termo do vocabulário, quase todas nulas, ponderadas por esquemas como o TF-IDF, que valoriza termos frequentes no documento e raros na coleção \cite{Manning2008}. O BM25, um refinamento probabilístico dessa ideia, continua sendo uma linha de base forte \cite{Robertson2009}. Essas representações, porém, só reconhecem correspondências exatas de termos: uma consulta sobre ``potabilidade da água'' não encontra um trecho que fale em ``água própria para consumo humano''.
+
+As representações densas resolvem esse descompasso de vocabulário. O word2vec aprende, a partir das palavras que costumam aparecer juntas, vetores de algumas centenas de dimensões em que relações semânticas viram relações geométricas; o exemplo clássico é que o vetor de ``rei'' menos o de ``homem'' mais o de ``mulher'' fica próximo do de ``rainha'' \cite{Mikolov2013}. Esses vetores, porém, são estáticos: uma palavra tem o mesmo vetor em qualquer contexto. Os modelos baseados no Transformer, como o BERT, produzem representações contextuais, em que o vetor de cada \textit{token} depende da frase em que ele aparece \cite{Devlin2019}.
+
+\subsection{Embeddings de sentenças e de trechos}
+
+Para recuperar trechos, é preciso representar um texto inteiro em um único vetor. O Sentence-BERT ajusta o BERT em uma arquitetura siamesa, em que dois textos passam pelo mesmo codificador e o treinamento aproxima os vetores de pares semanticamente equivalentes, o que permite comparar textos pela similaridade de cosseno de seus vetores \cite{Reimers2019}. O \textit{Dense Passage Retrieval} (DPR) usa dois codificadores BERT, um para as perguntas e outro para os trechos, treinados para que cada pergunta fique próxima dos trechos que a respondem; em perguntas de domínio aberto, superou o BM25 em 9 a 19 pontos percentuais de acurácia na recuperação dos 20 primeiros trechos \cite{Karpukhin2020}. É esse recuperador que compõe o RAG original, descrito na próxima seção \cite{Lewis2020}.
+
+Como os vetores dos documentos são calculados uma vez, na indexação, e a consulta é codificada separadamente, esses modelos são chamados de bicodificadores. A alternativa, os codificadores cruzados, processa a consulta e o trecho juntos e estima melhor a relevância, mas precisa ser executada para cada par, o que só é viável para reordenar um pequeno conjunto já recuperado; é esse o papel do reranqueamento nos sistemas RAG avançados (Seção~\ref{sec:rag}) \cite{Gao2023}.
+
+A escolha do modelo de \textit{embedding} importa em domínios como o deste trabalho, em que os documentos estão em português. O BGE-M3 é um modelo multilíngue que aceita entradas de até 8.192 \textit{tokens} e suporta, com o mesmo modelo, recuperação densa, esparsa e por múltiplos vetores \cite{Chen2024}. Trabalhos anteriores do grupo usaram o modelo \texttt{bge-large-en-v1.5} \cite{Montero2025}; neste trabalho foram usados o BGE-M3, executado localmente, e o \texttt{gemini-embedding-001}, do Google, acessado por API (Capítulo~\ref{cap:estudo-caso}).
+
+\subsection{Similaridade e busca vetorial}
+
+A proximidade entre dois vetores é medida, em geral, pela similaridade de cosseno, que considera apenas o ângulo entre eles, e não seu comprimento (Equação~\ref{eq:cosseno}) \cite{Manning2008}. Ela vai de $-1$ a $1$, e vetores que apontam na mesma direção têm similaridade 1. Quando os vetores são normalizados, ela coincide com o produto interno.
+
+\begin{equation}
+	\label{eq:cosseno}
+	\mathrm{sim}(\mathbf{q}, \mathbf{d}) = \cos\theta = \frac{\mathbf{q} \cdot \mathbf{d}}{\lVert \mathbf{q} \rVert \, \lVert \mathbf{d} \rVert} = \frac{\sum_{i=1}^{n} q_i d_i}{\sqrt{\sum_{i=1}^{n} q_i^2} \, \sqrt{\sum_{i=1}^{n} d_i^2}}
+\end{equation}
+
+Encontrar os $k$ vetores mais similares comparando a consulta com todos os vetores armazenados tem custo proporcional ao tamanho da coleção. Os bancos vetoriais usam, por isso, índices de busca aproximada de vizinhos mais próximos, que trocam uma pequena perda de exatidão por buscas muito mais rápidas. O HNSW, um dos mais usados, organiza os vetores em um grafo de várias camadas, em que as superiores têm poucas conexões longas e as inferiores muitas conexões curtas; a busca começa no topo e desce refinando a vizinhança \cite{Malkov2020}. O pgvector acrescenta ao PostgreSQL um tipo de dado vetorial, operadores de distância e índices HNSW, de modo que os vetores fiquem no mesmo banco relacional que os metadados e possam ser filtrados por eles na mesma consulta \cite{pgvector}. Essa combinação foi usada na PDSA-RS \cite{Montero2025} e é a usada pelo DocFlow.
 
 % ------------------------------------------------------------
 \section{Retrieval-Augmented Generation}
 \label{sec:rag}
 
-A \textit{Retrieval-Augmented Generation} (RAG) combina um LLM com um mecanismo de recuperação de informação: antes de gerar a resposta, o sistema busca em uma base de conhecimento externa os trechos mais relevantes para a consulta e os insere no \textit{prompt} \cite{Lewis2020,Gao2023}. \citeonline{Lewis2020} descreveram essa combinação como a união de uma memória paramétrica, o conhecimento guardado nos pesos do modelo gerador, com uma memória não paramétrica, um índice vetorial de documentos acessado por um recuperador neural \cite{Karpukhin2020}. Em tarefas de perguntas e respostas que exigem conhecimento factual, o modelo com recuperação superou modelos apenas paramétricos e gerou respostas mais específicas e factuais \cite{Lewis2020}.
+A \textit{Retrieval-Augmented Generation} (RAG) combina um LLM com um mecanismo de recuperação de informação: antes de gerar a resposta, o sistema busca em uma base de conhecimento externa os trechos mais relevantes para a consulta e os insere no \textit{prompt} \cite{Lewis2020,Gao2023}. \citeonline{Lewis2020} descreveram essa combinação como a união de uma memória paramétrica, o conhecimento guardado nos pesos do modelo gerador, com uma memória não paramétrica, um índice vetorial de documentos acessado pelo recuperador denso DPR (Seção~\ref{sec:embedding}) \cite{Karpukhin2020}. Em tarefas de perguntas e respostas que exigem conhecimento factual, o modelo com recuperação superou modelos apenas paramétricos e gerou respostas mais específicas e factuais \cite{Lewis2020}.
 
 \subsection{Funcionamento}
 
@@ -125,7 +156,7 @@ Como o conhecimento fica fora do modelo, atualizar o sistema é reindexar docume
 
 \subsection{Paradigmas e variações}
 
-\citeonline{Gao2023} organizam a evolução dos sistemas RAG em três paradigmas. O \textbf{RAG ingênuo} segue apenas o fluxo de indexar, recuperar e gerar descrito acima. O \textbf{RAG avançado} acrescenta etapas antes e depois da recuperação. Antes, a consulta pode ser reescrita, expandida com sinônimos e siglas ou decomposta em subconsultas; depois, os trechos recuperados podem ser reordenados por um modelo de reranqueamento ou comprimidos, para que só o conteúdo mais relevante chegue ao LLM. O \textbf{RAG modular} trata o sistema como um conjunto de módulos combináveis, como buscas híbridas, recuperação iterativa e roteamento entre bases, e inclui as arquiteturas em que agentes decidem quando e o que recuperar.
+\citeonline{Gao2023} organizam a evolução dos sistemas RAG em três paradigmas. O \textbf{RAG ingênuo} segue apenas o fluxo de indexar, recuperar e gerar descrito acima. O \textbf{RAG avançado} acrescenta etapas antes e depois da recuperação. Antes, a consulta pode ser reescrita, expandida com sinônimos e siglas ou decomposta em subconsultas; depois, os trechos recuperados podem ser reordenados por um modelo de reranqueamento, em geral um codificador cruzado (Seção~\ref{sec:embedding}), ou comprimidos, para que só o conteúdo mais relevante chegue ao LLM. O \textbf{RAG modular} trata o sistema como um conjunto de módulos combináveis, como buscas híbridas, recuperação iterativa e roteamento entre bases, e inclui as arquiteturas em que agentes decidem quando e o que recuperar.
 
 Outra decisão de projeto é a origem da consulta. Em assistentes de perguntas e respostas, a consulta é a própria pergunta do usuário. Em tarefas de análise de processos, como as tratadas neste trabalho, não há uma pergunta: a consulta precisa ser construída a partir da tarefa ou do conteúdo do processo. Uma consulta fixa, igual para todos os processos, recupera sempre os mesmos trechos, enquanto consultas derivadas dos documentos de cada processo fazem o contexto acompanhar o caso. O Capítulo~\ref{cap:metodologia} descreve como o DocFlow constrói essas consultas.
 
@@ -173,37 +204,6 @@ As duas abordagens diferem no lugar em que o conhecimento fica. No \textit{fine-
 As abordagens não são excludentes. O \textit{fine-tuning} é mais indicado para ensinar ao modelo um formato de saída, um vocabulário ou um comportamento, como redigir no padrão de um parecer, e o RAG para fornecer o conhecimento factual em que a resposta deve se apoiar; é possível ajustar um modelo e usá-lo dentro de um sistema RAG. Neste trabalho, a escolha pelo RAG segue o caminho dos trabalhos anteriores do grupo \cite{Montero2025,Montero2026} e se justifica por três características do domínio: a norma da certificação HS mudou duas vezes desde 2020, os pareceres precisam indicar o requisito em que se baseiam, e não há um conjunto de pareceres rotulados grande o bastante para treinar um modelo.
 
 % ------------------------------------------------------------
-\section{Embeddings}
-\label{sec:embedding}
-
-Um \textit{embedding} é uma representação de um texto (uma palavra, uma frase ou um trecho inteiro) como um vetor de números reais de dimensão fixa, construída de modo que textos com significados próximos fiquem próximos no espaço vetorial. É essa propriedade que permite à recuperação do RAG encontrar trechos relevantes mesmo quando eles não compartilham palavras com a consulta.
-
-\subsection{Representações esparsas e densas}
-
-As representações clássicas da recuperação de informação são esparsas: cada documento é um vetor com uma dimensão por termo do vocabulário, quase todas nulas, ponderadas por esquemas como o TF-IDF, que valoriza termos frequentes no documento e raros na coleção \cite{Manning2008}. O BM25, um refinamento probabilístico dessa ideia, continua sendo uma linha de base forte \cite{Robertson2009}. Essas representações, porém, só reconhecem correspondências exatas de termos: uma consulta sobre ``potabilidade da água'' não encontra um trecho que fale em ``água própria para consumo humano''.
-
-As representações densas resolvem esse descompasso de vocabulário. O word2vec aprende, a partir das palavras que costumam aparecer juntas, vetores de algumas centenas de dimensões em que relações semânticas viram relações geométricas; o exemplo clássico é que o vetor de ``rei'' menos o de ``homem'' mais o de ``mulher'' fica próximo do de ``rainha'' \cite{Mikolov2013}. Esses vetores, porém, são estáticos: uma palavra tem o mesmo vetor em qualquer contexto. Os modelos baseados no Transformer, como o BERT, produzem representações contextuais, em que o vetor de cada \textit{token} depende da frase em que ele aparece \cite{Devlin2019}.
-
-\subsection{Embeddings de sentenças e de trechos}
-
-Para recuperar trechos, é preciso representar um texto inteiro em um único vetor. O Sentence-BERT ajusta o BERT em uma arquitetura siamesa, em que dois textos passam pelo mesmo codificador e o treinamento aproxima os vetores de pares semanticamente equivalentes, o que permite comparar textos pela similaridade de cosseno de seus vetores \cite{Reimers2019}. O \textit{Dense Passage Retrieval} (DPR) usa dois codificadores BERT, um para as perguntas e outro para os trechos, treinados para que cada pergunta fique próxima dos trechos que a respondem; em perguntas de domínio aberto, superou o BM25 em 9 a 19 pontos percentuais de acurácia na recuperação dos 20 primeiros trechos \cite{Karpukhin2020}. É esse recuperador que compõe o RAG original \cite{Lewis2020}.
-
-Como os vetores dos documentos são calculados uma vez, na indexação, e a consulta é codificada separadamente, esses modelos são chamados de bicodificadores. A alternativa, os codificadores cruzados, processa a consulta e o trecho juntos e estima melhor a relevância, mas precisa ser executada para cada par, o que só é viável para reordenar um pequeno conjunto já recuperado; é esse o papel do reranqueamento no RAG avançado \cite{Gao2023}.
-
-A escolha do modelo de \textit{embedding} importa em domínios como o deste trabalho, em que os documentos estão em português. O BGE-M3 é um modelo multilíngue que aceita entradas de até 8.192 \textit{tokens} e suporta, com o mesmo modelo, recuperação densa, esparsa e por múltiplos vetores \cite{Chen2024}. Trabalhos anteriores do grupo usaram o modelo \texttt{bge-large-en-v1.5} \cite{Montero2025}; neste trabalho foram usados o BGE-M3, executado localmente, e o \texttt{gemini-embedding-001}, do Google, acessado por API (Capítulo~\ref{cap:estudo-caso}).
-
-\subsection{Similaridade e busca vetorial}
-
-A proximidade entre dois vetores é medida, em geral, pela similaridade de cosseno, que considera apenas o ângulo entre eles, e não seu comprimento (Equação~\ref{eq:cosseno}) \cite{Manning2008}. Ela vai de $-1$ a $1$, e vetores que apontam na mesma direção têm similaridade 1. Quando os vetores são normalizados, ela coincide com o produto interno.
-
-\begin{equation}
-	\label{eq:cosseno}
-	\mathrm{sim}(\mathbf{q}, \mathbf{d}) = \cos\theta = \frac{\mathbf{q} \cdot \mathbf{d}}{\lVert \mathbf{q} \rVert \, \lVert \mathbf{d} \rVert} = \frac{\sum_{i=1}^{n} q_i d_i}{\sqrt{\sum_{i=1}^{n} q_i^2} \, \sqrt{\sum_{i=1}^{n} d_i^2}}
-\end{equation}
-
-Encontrar os $k$ vetores mais similares comparando a consulta com todos os vetores armazenados tem custo proporcional ao tamanho da coleção. Os bancos vetoriais usam, por isso, índices de busca aproximada de vizinhos mais próximos, que trocam uma pequena perda de exatidão por buscas muito mais rápidas. O HNSW, um dos mais usados, organiza os vetores em um grafo de várias camadas, em que as superiores têm poucas conexões longas e as inferiores muitas conexões curtas; a busca começa no topo e desce refinando a vizinhança \cite{Malkov2020}. O pgvector acrescenta ao PostgreSQL um tipo de dado vetorial, operadores de distância e índices HNSW, de modo que os vetores fiquem no mesmo banco relacional que os metadados e possam ser filtrados por eles na mesma consulta \cite{pgvector}. Essa combinação foi usada na PDSA-RS \cite{Montero2025} e é a usada pelo DocFlow.
-
-% ------------------------------------------------------------
 \section{Chunking}
 \label{sec:chunking}
 
@@ -236,13 +236,13 @@ Este trabalho dá continuidade a uma linha de pesquisa do LUMAC sobre o uso de L
 
 \subsection{A Plataforma de Defesa Sanitária Animal do Rio Grande do Sul}
 
-A Plataforma de Defesa Sanitária Animal do Rio Grande do Sul (PDSA-RS), criada em 2019, apoia a sanidade e a produção animal no estado por meio de uma plataforma digital para a gestão de certificações e o acompanhamento da conformidade sanitária \cite{Montero2025}. Foi desenvolvida pela UFSM em parceria com o Ministério da Agricultura e Pecuária (MAPA), com apoio do Fundo de Desenvolvimento e Defesa Sanitária Animal (Fundesa) \verificar{o nome por extenso do Fundesa}, e integra as etapas da certificação de estabelecimentos avícolas e suínos, ligando inspeções veterinárias, laboratórios e autoridades de defesa agropecuária. Produtores e fiscais acompanham pela plataforma os exames sanitários, o processamento das amostras e a emissão dos certificados exigidos para a movimentação de animais no país e no exterior \cite{Montero2025}.
+A Plataforma de Defesa Sanitária Animal do Rio Grande do Sul (PDSA-RS), criada em 2019, apoia a sanidade e a produção animal no estado por meio de uma plataforma digital para a gestão de certificações e o acompanhamento da conformidade sanitária \cite{Montero2025}. Foi desenvolvida pela UFSM em parceria com o Ministério da Agricultura e Pecuária (MAPA), com apoio do Fundo de Desenvolvimento e Defesa Sanitária Animal (FUNDESA), e integra as etapas da certificação de estabelecimentos avícolas e suínos, ligando inspeções veterinárias, laboratórios e autoridades de defesa agropecuária. Produtores e fiscais acompanham pela plataforma os exames sanitários, o processamento das amostras e a emissão dos certificados exigidos para a movimentação de animais no país e no exterior \cite{Montero2025}.
 
-A plataforma adota uma arquitetura orientada a microsserviços. O \textit{front-end} é formado por portais especializados para cada público, como o Serviço Veterinário Estadual (SVE), os responsáveis técnicos, os laboratórios e o MAPA; no \textit{back-end}, APIs de negócio implementam os fluxos regulatórios, e APIs de serviço oferecem funcionalidades reutilizáveis às demais \cite{Montero2025}. Sobre essa base, o grupo já estudou, por exemplo, uma arquitetura de \textit{blockchain} para o controle sanitário animal \cite{Descovi2021} e o desempenho de simulações de propagação de doenças animais em R e Python \cite{Schneider2024}.
+A plataforma adota uma arquitetura orientada a microsserviços. O \textit{front-end} é formado por portais especializados para cada público, como o Serviço Veterinário Estadual, os responsáveis técnicos, os laboratórios e o MAPA; no \textit{back-end}, APIs de negócio implementam os fluxos regulatórios, e APIs de serviço oferecem funcionalidades reutilizáveis às demais \cite{Montero2025}. Sobre essa base, o grupo já estudou, por exemplo, uma arquitetura de \textit{blockchain} para o controle sanitário animal \cite{Descovi2021} e o desempenho de simulações de propagação de doenças animais em R e Python \cite{Schneider2024}.
 
 \subsection{Trabalhos anteriores do grupo}
 
-Sobre essa plataforma, o grupo aplicou RAG pela primeira vez no módulo de certificação avícola: as instruções normativas que definem os exames exigidos foram indexadas, e um LLM pequeno, executado localmente, passou a responder sobre a condição sanitária das solicitações, com acurácia de 55\% contra 12\% do mesmo modelo sem recuperação \cite{Montero2025iceis,Montero2025}. Em seguida, \citeonline{Montero2026} propuseram uma arquitetura genérica de assistente para analistas do setor público e avaliaram seu motor de geração em pareceres sobre recursos administrativos da SEAPI-RS. Essa arquitetura foi depois implementada como a plataforma DocFlow, descrita no Capítulo~\ref{cap:metodologia}. Esses trabalhos são analisados em detalhe na Seção~\ref{sec:tr-grupo}.
+Sobre essa plataforma, o grupo aplicou RAG pela primeira vez no módulo de certificação avícola: as instruções normativas que definem os exames exigidos foram indexadas, e um LLM pequeno, executado localmente, passou a responder sobre a condição sanitária das solicitações, com acurácia de 55\% contra 12\% do mesmo modelo sem recuperação \cite{Montero2025iceis,Montero2025}. Em seguida, \citeonline{Montero2026} propuseram uma arquitetura genérica de assistente para analistas do setor público e avaliaram seu motor de geração em pareceres sobre recursos administrativos julgados pela JAP da SEAPI-RS. Essa arquitetura foi depois implementada como a plataforma DocFlow, descrita no Capítulo~\ref{cap:metodologia}. Esses trabalhos são analisados em detalhe na Seção~\ref{sec:tr-grupo}.
 
 % ------------------------------------------------------------
 \section{PNIP e a Certificação Higiênico-Sanitária}
@@ -253,11 +253,11 @@ Sobre essa plataforma, o grupo aplicou RAG pela primeira vez no módulo de certi
 A Plataforma Nacional da Indústria do Pescado (PNIP), instituída pela Portaria MPA nº~361/2024 \cite{MPA2024}, é a plataforma digital oficial do Ministério da Pesca e Aquicultura para o envio, a análise e a emissão das certificações do setor pesqueiro.
 Ao centralizar esses fluxos, a plataforma apoia a rastreabilidade que liga cada produto pesqueiro à sua origem legal \cite{Olsen2018}, um dos pilares do combate à pesca ilegal, não declarada e não regulamentada, que responde por uma parcela relevante das capturas mundiais \cite{Agnew2009}.
 
-Cada solicitação é analisada por perfis hierárquicos (analista técnico, coordenador e diretor), o que exige conhecimento aprofundado de normas que mudam com o tempo. A plataforma também se integra a sistemas externos do governo e de parceiros, como SERPRO, CRMV, SISRGP, PesqBrasil e SEI, para validar dados e tramitar documentos. \verificar{conferir a lista de integrações e acrescentar dados de volume, como o número de solicitações pendentes e de analistas, se puderem ser divulgados.}
+Cada solicitação é analisada por perfis hierárquicos (analista técnico, coordenador e diretor), o que exige conhecimento aprofundado de normas que mudam com o tempo. A plataforma também se integra a sistemas externos do governo e de parceiros, como SERPRO, CRMV, SISRGP, PesqBrasil e SEI, para validar dados e tramitar documentos.
 
 \subsection{A certificação higiênico-sanitária de embarcações}
 
-A certificação higiênico-sanitária de embarcações pesqueiras é regida pela Portaria SAP/MAPA nº~310/2020, alterada pelas Portarias MPA nº~171/2023 e nº~742/2026 \cite{Portaria310,Portaria171,Portaria742}, e resulta no Certificado Oficial de Boas Práticas Higiênico-Sanitárias a Bordo, válido por cinco anos. A norma estabelece os requisitos que a embarcação deve cumprir, como o programa de autocontrole, a potabilidade da água usada a bordo, o treinamento da tripulação, o controle de pragas e as características do material de revestimento das áreas em contato com o pescado, e traz no Anexo~I a lista de verificação usada na análise. A Portaria 742/2026 acrescentou requisitos específicos para a secagem de bexiga natatória e o congelamento de camarão a bordo.
+A certificação higiênico-sanitária de embarcações pesqueiras é regida pela Portaria SAP/MAPA nº~310/2020, alterada pelas Portarias MPA nº~171/2023 e nº~742/2026 \cite{Portaria310,Portaria171,Portaria742}, e resulta no Certificado Oficial de Boas Práticas Higiênico-Sanitárias a Bordo, válido por cinco anos. A norma estabelece os requisitos que a embarcação deve cumprir, como o programa de autocontrole, a potabilidade da água usada a bordo, o treinamento da tripulação, o controle de pragas e as características do material de revestimento das áreas em contato com o pescado, e traz no Anexo~I a lista de verificação usada na análise. A Portaria 742/2026 acrescentou requisitos específicos para a secagem de bexiga natatória e o congelamento de camarão e lagostim a bordo.
 
 Para solicitar o certificado, o técnico responsável pela embarcação preenche na PNIP a lista de verificação do Anexo~I e anexa as evidências de cada requisito, organizadas por categoria:
 
